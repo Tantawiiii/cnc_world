@@ -1,3 +1,4 @@
+import 'package:cnc_world/core/constant/app_assets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -57,7 +58,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   String _getUserName() {
     final userData = _storageService.getUserData();
-    return userData?['name'] ?? 'المستخدم';
+    return userData?['name'] ?? AppTexts.defaultUserName;
   }
 
   @override
@@ -135,9 +136,7 @@ class _HomeScreenState extends State<HomeScreen>
                                     color: AppColors.error.withValues(
                                       alpha: 0.1,
                                     ),
-                                    borderRadius: BorderRadius.circular(
-                                      20.r,
-                                    ),
+                                    borderRadius: BorderRadius.circular(20.r),
                                     border: Border.all(
                                       color: AppColors.error,
                                       width: 1,
@@ -145,7 +144,7 @@ class _HomeScreenState extends State<HomeScreen>
                                   ),
                                   child: Center(
                                     child: Text(
-                                      'Error Sliders: ${state.message}',
+                                      '${AppTexts.errorLoadingSliders}: ${state.message}',
                                       style: TextStyle(
                                         color: AppColors.error,
                                         fontSize: 12.sp,
@@ -235,33 +234,33 @@ class _HomeScreenState extends State<HomeScreen>
     final categories = [
       CategoryItem(
         title: AppTexts.homeCategoryMaintenance,
-        icon: Icons.build_outlined,
-        color: AppColors.primaryGradient,
+        icon: AppAssets.cncMagnificent,
+        color: AppColors.border,
       ),
       CategoryItem(
         title: AppTexts.homeCategoryUsedMachines,
-        icon: Icons.precision_manufacturing_outlined,
-        color: AppColors.secondaryGradient,
+        icon: AppAssets.cncUsedMachines,
+        color: AppColors.border,
       ),
       CategoryItem(
         title: AppTexts.homeCategoryManufacturingSupplies,
-        icon: Icons.inventory_2_outlined,
-        color: AppColors.accentGradient,
+        icon: AppAssets.cncManufacturingSupplies,
+        color: AppColors.border,
       ),
       CategoryItem(
         title: AppTexts.homeCategoryCompanyDirectory,
-        icon: Icons.business_outlined,
-        color: AppColors.brandGradient,
+        icon: AppAssets.cncGuide,
+        color: AppColors.border,
       ),
       CategoryItem(
         title: AppTexts.homeCategoryDesigns,
-        icon: Icons.design_services_outlined,
-        color: AppColors.primaryGradient,
+        icon: AppAssets.cncDesignd,
+        color: AppColors.border,
       ),
       CategoryItem(
         title: AppTexts.homeCategoryWorkshopDirectory,
-        icon: Icons.factory_outlined,
-        color: AppColors.secondaryGradient,
+        icon: AppAssets.cncmachen,
+        color: AppColors.border,
       ),
     ];
 
@@ -297,21 +296,15 @@ class _HomeScreenState extends State<HomeScreen>
     int totalItems,
     double animationValue,
   ) {
-    // Staggered animation: each card starts at a different time
-    final delay = (index / totalItems) * 0.5; // Stagger delay (0 to 0.5)
+    final delay = (index / totalItems) * 0.5;
     final adjustedValue = ((animationValue - delay) / (1.0 - delay)).clamp(
       0.0,
       1.0,
     );
 
-    // Fade animation
     final opacity = Curves.easeOut.transform(adjustedValue);
-
-    // Slide animation (from bottom)
     final slideOffset =
         (1.0 - Curves.easeOutCubic.transform(adjustedValue)) * 30.h;
-
-    // Scale animation
     final scale = 0.8 + (Curves.elasticOut.transform(adjustedValue) * 0.2);
 
     return Transform.translate(
@@ -323,7 +316,22 @@ class _HomeScreenState extends State<HomeScreen>
           child: CategoryCardWidget(
             category: category,
             onTap: () {
-              // Handle category tap
+              if (category.title == AppTexts.homeCategoryMaintenance) {
+                Navigator.of(context).pushNamed(AppRoutes.maintenance);
+              } else if (category.title == AppTexts.homeCategoryUsedMachines) {
+                Navigator.of(context).pushNamed(AppRoutes.usedMachines);
+              } else if (category.title ==
+                  AppTexts.homeCategoryManufacturingSupplies) {
+                Navigator.of(context).pushNamed(AppRoutes.merchants);
+              } else if (category.title ==
+                  AppTexts.homeCategoryCompanyDirectory) {
+                Navigator.of(context).pushNamed(AppRoutes.companies);
+              } else if (category.title == AppTexts.homeCategoryDesigns) {
+                Navigator.of(context).pushNamed(AppRoutes.designs);
+              } else if (category.title ==
+                  AppTexts.homeCategoryWorkshopDirectory) {
+                Navigator.of(context).pushNamed(AppRoutes.sellers);
+              }
             },
           ),
         ),

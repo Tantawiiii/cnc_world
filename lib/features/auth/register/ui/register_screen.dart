@@ -187,7 +187,7 @@ class _RegisterScreenState extends State<RegisterScreen>
               child: BlocListener<RegisterCubit, RegisterState>(
                 listener: (context, state) {
                   if (state is RegisterSuccess) {
-                    // Show success toast
+
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(AppTexts.registerSuccess),
@@ -196,7 +196,6 @@ class _RegisterScreenState extends State<RegisterScreen>
                         duration: const Duration(seconds: 2),
                       ),
                     );
-                    // Navigate to login screen
                     Navigator.of(context).pushReplacementNamed(AppRoutes.login);
                   } else if (state is RegisterError) {
                     ScaffoldMessenger.of(context).showSnackBar(

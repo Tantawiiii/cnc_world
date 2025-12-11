@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../core/constant/app_colors.dart';
+import '../../core/constant/app_texts.dart';
 
 class CurvedBottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -22,7 +23,7 @@ class CurvedBottomNavBar extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [AppColors.primary, AppColors.primaryDark],
+            colors: [AppColors.borderLight, AppColors.borderLight],
           ),
           boxShadow: [
             BoxShadow(
@@ -38,14 +39,14 @@ class CurvedBottomNavBar extends StatelessWidget {
           children: [
             _buildNavItem(
               icon: Icons.home_rounded,
-              label: 'الرئيسية',
+              label: AppTexts.home,
               index: 0,
               isActive: currentIndex == 0,
             ),
             SizedBox(width: 80.w), // Space for notch
             _buildNavItem(
               icon: Icons.settings_rounded,
-              label: 'الإعدادات',
+              label: AppTexts.settings,
               index: 1,
               isActive: currentIndex == 1,
             ),

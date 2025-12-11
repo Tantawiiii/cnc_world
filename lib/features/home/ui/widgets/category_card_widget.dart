@@ -17,7 +17,7 @@ class CategoryCardWidget extends StatelessWidget {
       onTap: onTap ?? () {},
       child: Container(
         decoration: BoxDecoration(
-          gradient: category.color,
+          color: category.color,
           borderRadius: BorderRadius.circular(16.r),
           boxShadow: [
             BoxShadow(
@@ -30,18 +30,7 @@ class CategoryCardWidget extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: EdgeInsets.all(12.w),
-              decoration: BoxDecoration(
-                color: AppColors.textOnPrimary.withValues(alpha: 0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                category.icon,
-                size: 28.sp,
-                color: AppColors.textOnPrimary,
-              ),
-            ),
+           Image.asset(category.icon, height: 130.h,),
             SizedBox(height: 12.h),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 8.w),
@@ -49,8 +38,8 @@ class CategoryCardWidget extends StatelessWidget {
                 category.title,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w800,
                   color: AppColors.textOnPrimary,
                   height: 1.2,
                 ),

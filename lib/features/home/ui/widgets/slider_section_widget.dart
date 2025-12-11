@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -18,11 +20,61 @@ class SliderSectionWidget extends StatefulWidget {
 class _SliderSectionWidgetState extends State<SliderSectionWidget> {
   final PageController _sliderController = PageController();
   int _currentSliderIndex = 0;
+  Timer? _autoScrollTimer;
+  bool _isUserScrolling = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _startAutoScroll();
+  }
+
+  @override
+  void didUpdateWidget(SliderSectionWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Restart auto-scroll if sliders changed
+    if (oldWidget.sliders.length != widget.sliders.length) {
+      _startAutoScroll();
+    }
+  }
 
   @override
   void dispose() {
+    _autoScrollTimer?.cancel();
     _sliderController.dispose();
     super.dispose();
+  }
+
+  void _startAutoScroll() {
+    // Only auto-scroll if there's more than one slider
+    if (widget.sliders.length <= 1) return;
+
+    _autoScrollTimer?.cancel();
+    _autoScrollTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
+      if (!_isUserScrolling && mounted) {
+        final nextIndex = (_currentSliderIndex + 1) % widget.sliders.length;
+        if (_sliderController.hasClients) {
+          _sliderController.animateToPage(
+            nextIndex,
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeInOut,
+          );
+        }
+      }
+    });
+  }
+
+  void _pauseAutoScroll() {
+    _isUserScrolling = true;
+    _autoScrollTimer?.cancel();
+
+    // Resume auto-scroll after 5 seconds of no user interaction
+    Future.delayed(const Duration(seconds: 5), () {
+      if (mounted) {
+        _isUserScrolling = false;
+        _startAutoScroll();
+      }
+    });
   }
 
   String _getSliderImageUrl(SliderItem slider) {
@@ -78,6 +130,7 @@ class _SliderSectionWidgetState extends State<SliderSectionWidget> {
               setState(() {
                 _currentSliderIndex = index;
               });
+              _pauseAutoScroll();
             },
             itemCount: widget.sliders.length,
             itemBuilder: (context, index) {

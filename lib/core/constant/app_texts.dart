@@ -85,10 +85,96 @@ final class AppTexts {
 
   // Home
   static const String welcome = 'مرحباً';
+  static const String home = 'الرئيسية';
+  static const String defaultUserName = 'المستخدم';
   static const String homeCategoryMaintenance = 'الصيانه';
   static const String homeCategoryUsedMachines = 'الماكينات المستعمله';
   static const String homeCategoryManufacturingSupplies = 'مستلزمات التصنيع';
   static const String homeCategoryCompanyDirectory = 'دليل الشركات';
   static const String homeCategoryDesigns = 'التصميمات';
   static const String homeCategoryWorkshopDirectory = 'دليل الورش';
+  static const String errorLoadingSliders = 'خطأ في تحميل الشرائح';
+
+  // Settings
+  static const String settings = 'الإعدادات';
+  static const String logout = 'تسجيل الخروج';
+  static const String logoutConfirmation =
+      'هل أنت متأكد من رغبتك في تسجيل الخروج؟';
+  static const String logoutDescription = 'تسجيل الخروج من حسابك';
+  static const String cancel = 'إلغاء';
+
+  // Maintenance
+  static const String maintenance = 'طلب صيانة';
+  static const String maintenanceTitle = 'طلب خدمة صيانة';
+  static const String problemDetails = 'تفاصيل المشكلة';
+  static const String problemDetailsHint = 'أدخل تفاصيل المشكلة التي تواجهها';
+  static const String problemDetailsRequired = 'يرجى إدخال تفاصيل المشكلة';
+  static const String selectEngineer = 'اختر المهندس';
+  static const String engineerRequired = 'يرجى اختيار المهندس';
+  static const String uploadProblemImage = 'رفع صورة المشكلة';
+  static const String maintenanceImageRequired = 'يرجى رفع صورة المشكلة';
+  static const String submitMaintenance = 'إرسال طلب الصيانة';
+  static const String maintenanceSuccess = 'تم إرسال طلب الصيانة بنجاح';
+  static const String maintenanceError = 'فشل إرسال طلب الصيانة';
+  static const String loadingEngineers = 'جاري تحميل المهندسين...';
+  static const String maintenanceUploadingImage = 'جاري رفع الصورة...';
+  static const String submittingRequest = 'جاري إرسال الطلب...';
+  static const String noEngineersAvailable = 'لا يوجد مهندسين متاحين';
+  static const String imageUploadSuccess = 'تم رفع الصورة بنجاح';
+
+  // Used Machines
+  static const String usedMachines = 'الماكينات المستعملة';
+  static const String addUsedMachine = 'إضافة ماكينة مستعملة';
+  static const String machineName = 'اسم الماكينة';
+  static const String machineNameHint = 'أدخل اسم الماكينة';
+  static const String machineNameRequired = 'يرجى إدخال اسم الماكينة';
+  static const String machinePrice = 'السعر';
+  static const String machinePriceHint = 'أدخل السعر';
+  static const String machinePriceRequired = 'يرجى إدخال السعر';
+  static const String invalidPrice = 'يرجى إدخال سعر صحيح';
+  static const String machineDescription = 'الوصف';
+  static const String machineDescriptionHint = 'أدخل وصف الماكينة';
+  static const String machineDescriptionRequired = 'يرجى إدخال الوصف';
+  static const String uploadMachineImage = 'رفع صورة الماكينة';
+  static const String addMachine = 'إضافة الماكينة';
+  static const String machineAddedSuccess = 'تم إضافة الماكينة بنجاح';
+  static const String noMachinesAvailable = 'لا توجد ماكينات متاحة';
+  static const String retry = 'إعادة المحاولة';
+  static const String sellerInfo = 'معلومات البائع';
+  static const String createdAt = 'تاريخ الإضافة';
+
+  // Merchants
+  static const String merchants = 'التجار';
+  static const String noMerchantsAvailable = 'لا يوجد تجار متاحين';
+  static const String merchantInfo = 'معلومات التاجر';
+  static const String contactInfo = 'معلومات الاتصال';
+  static const String phoneNumber = 'رقم الهاتف';
+  static const String facebook = 'فيسبوك';
+  static const String whatsapp = 'واتساب';
+
+  // Companies
+  static const String companies = 'الشركات';
+  static const String noCompaniesAvailable = 'لا توجد شركات متاحة';
+  static const String companyInfo = 'معلومات الشركة';
+  static const String companyName = 'اسم الشركة';
+  static const String companyDescription = 'وصف الشركة';
+  static const String companyAddress = 'عنوان الشركة';
+  static const String products = 'المنتجات';
+
+  // Sellers
+  static const String noSellersAvailable = 'لا يوجد بائعين متاحين';
+
+  // Profile
+  static const String profile = 'الملف الشخصي';
+  static const String myMaintenances = 'طلبات الصيانة الخاصة بي';
+  static const String noMaintenancesAvailable = 'لا توجد طلبات صيانة';
+  static const String maintenanceStatus = 'حالة الطلب';
+  static const String userAssignedWarning =
+      'اداره التطبيق غير ملزمه باجر المهندس';
+  static const String adminAssignedMessage = 'يتم محاسبه المهندس باجر رمزي';
+  static const String assignedBy = 'تم التعيين بواسطة';
+
+  // Used Machines Disclaimer
+  static const String usedMachinesDisclaimer =
+      'الابليكشن مسؤول بالكامل عن معاينه ونقل وتركيب والتدريب علي الماكينه';
 }

@@ -15,4 +15,17 @@ final class AppRoutes {
   static const String settings = '/settings';
   static const String userInfo = '/user-info';
   static const String orderDetails = '/order-details';
+  static const String maintenance = '/maintenance';
+  static const String usedMachines = '/used-machines';
+  static const String addUsedMachine = '/add-used-machine';
+  static const String usedMachineDetail = '/used-machine-detail';
+  static const String merchants = '/merchants';
+  static const String merchantDetail = '/merchant-detail';
+  static const String companies = '/companies';
+  static const String companyDetail = '/company-detail';
+  static const String designs = '/designs';
+  static const String addDesign = '/add-design';
+  static const String sellers = '/sellers';
+  static const String sellerDetail = '/seller-detail';
+  static const String profile = '/profile';
 }
