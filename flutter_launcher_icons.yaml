@@ -1,0 +1,11 @@
+# flutter pub run flutter_launcher_icons
+flutter_launcher_icons:
+  image_path: "assets/cnc_logo.jpeg"
+
+  android: "launcher_icon"
+  min_sdk_android: 21
+  adaptive_icon_foreground_inset: 16
+  ios: true
+  remove_alpha_ios: true
+
+
