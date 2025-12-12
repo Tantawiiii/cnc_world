@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
-import 'dart:math' as math;
 
 import '../../../core/constant/app_colors.dart';
 import '../../../core/constant/app_texts.dart';
@@ -11,7 +10,6 @@ import '../../../core/routing/app_routes.dart';
 import '../cubit/design_cubit.dart';
 import '../cubit/design_state.dart';
 import '../data/models/design_models.dart';
-import '../data/repositories/design_repository.dart';
 
 class DesignsListScreen extends StatelessWidget {
   const DesignsListScreen({super.key});
@@ -67,64 +65,55 @@ class DesignsListScreen extends StatelessWidget {
                   ),
                 ),
                 Expanded(
-                  child: BlocBuilder<DesignCubit, DesignState>(
+                  child: BlocConsumer<DesignCubit, DesignState>(
+                    listener: (context, state) {
+                      if (state is DesignDownloaded) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('تم تحميل الصورة بنجاح'),
+                            backgroundColor: AppColors.success,
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      } else if (state is DesignDownloadError) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('فشل التحميل: ${state.message}'),
+                            backgroundColor: AppColors.error,
+                            duration: const Duration(seconds: 3),
+                          ),
+                        );
+                      }
+                    },
                     builder: (context, state) {
                       if (state is DesignsLoading) {
                         return _buildShimmerList();
-                      } else if (state is DesignsLoaded) {
-                        if (state.designs.isEmpty) {
-                          return Center(
-                            child: Text(
-                              'لا توجد تصميمات متاحة',
-                              style: TextStyle(
-                                fontSize: 16.sp,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          );
-                        }
-                        return BlocListener<DesignCubit, DesignState>(
-                          listener: (context, state) {
-                            if (state is DesignDownloaded) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('تم تحميل التصميم بنجاح'),
-                                  backgroundColor: AppColors.success,
-                                ),
-                              );
-                            } else if (state is DesignDownloadError) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(state.message),
-                                  backgroundColor: AppColors.error,
-                                ),
-                              );
-                            }
-                          },
-                          child: RefreshIndicator(
-                            onRefresh: () async {
-                              context.read<DesignCubit>().loadDesigns();
-                            },
-                            color: AppColors.primary,
-                            child: ListView.separated(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 16.w,
-                                vertical: 8.h,
-                              ),
-                              itemCount: state.designs.length,
-                              separatorBuilder: (context, index) =>
-                                  SizedBox(height: 12.h),
-                              itemBuilder: (context, index) {
-                                return _buildAnimatedDesignCard(
-                                  context,
-                                  state.designs[index],
-                                  index,
-                                );
-                              },
+                      }
+
+                      List<Design> designs = [];
+                      if (state is DesignsLoaded) {
+                        designs = state.designs;
+                      } else if (state is DesignDownloading) {
+                        designs = state.designs;
+                      } else if (state is DesignDownloaded) {
+                        designs = state.designs;
+                      } else if (state is DesignDownloadError) {
+                        designs = state.designs;
+                      }
+
+                      if (designs.isEmpty && state is! DesignsLoading) {
+                        return Center(
+                          child: Text(
+                            'لا توجد تصميمات متاحة',
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              color: AppColors.textSecondary,
                             ),
                           ),
                         );
-                      } else if (state is DesignsError) {
+                      }
+
+                      if (state is DesignsError) {
                         return Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -154,6 +143,34 @@ class DesignsListScreen extends StatelessWidget {
                           ),
                         );
                       }
+
+                      if (designs.isNotEmpty) {
+                        return RefreshIndicator(
+                          onRefresh: () async {
+                            context.read<DesignCubit>().loadDesigns();
+                          },
+                          color: AppColors.primary,
+                          child: ListView.separated(
+                            key: ValueKey('designs_list_${designs.length}'),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16.w,
+                              vertical: 8.h,
+                            ),
+                            itemCount: designs.length,
+                            separatorBuilder: (context, index) =>
+                                SizedBox(height: 12.h),
+                            itemBuilder: (context, index) {
+                              return _buildAnimatedDesignCard(
+                                context,
+                                designs[index],
+                                index,
+                              );
+                            },
+                            cacheExtent: 500,
+                          ),
+                        );
+                      }
+
                       return const SizedBox.shrink();
                     },
                   ),
@@ -172,6 +189,7 @@ class DesignsListScreen extends StatelessWidget {
     int index,
   ) {
     return TweenAnimationBuilder<double>(
+      key: ValueKey('design_card_${design.id}'),
       tween: Tween(begin: 0.0, end: 1.0),
       duration: Duration(milliseconds: 400 + (index * 80)),
       curve: Curves.easeOutCubic,
@@ -244,12 +262,36 @@ class DesignsListScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  // Download button overlay
-                  if (design.fileUrlString.isNotEmpty)
+                  // Download button overlay - تنزيل الصورة مباشرة من imageUrl
+                  if (design.imageUrlString.isNotEmpty)
                     Positioned(
                       top: 8.h,
                       left: 8.w,
                       child: BlocBuilder<DesignCubit, DesignState>(
+                        buildWhen: (previous, current) {
+                          final prevDownloading =
+                              previous is DesignDownloading &&
+                              previous.designId == design.id;
+                          final currDownloading =
+                              current is DesignDownloading &&
+                              current.designId == design.id;
+                          final prevDownloaded =
+                              previous is DesignDownloaded &&
+                              previous.designId == design.id;
+                          final currDownloaded =
+                              current is DesignDownloaded &&
+                              current.designId == design.id;
+                          final prevError =
+                              previous is DesignDownloadError &&
+                              previous.designId == design.id;
+                          final currError =
+                              current is DesignDownloadError &&
+                              current.designId == design.id;
+
+                          return prevDownloading != currDownloading ||
+                              prevDownloaded != currDownloaded ||
+                              prevError != currError;
+                        },
                         builder: (context, state) {
                           final isDownloading =
                               state is DesignDownloading &&

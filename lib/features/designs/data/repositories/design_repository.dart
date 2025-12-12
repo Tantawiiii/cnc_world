@@ -118,7 +118,18 @@ class DesignRepository {
 
   Future<void> downloadFile(String url, String savePath) async {
     try {
-      await _apiService.dio.download(url, savePath);
+      // تنزيل الملف مباشرة من URL بدون أي API call
+      // استخدام Dio مباشرة للتنزيل من URL العام
+      final dio = Dio();
+      await dio.download(
+        url,
+        savePath,
+        options: Options(
+          responseType: ResponseType.bytes,
+          followRedirects: true,
+          validateStatus: (status) => status != null && status < 500,
+        ),
+      );
     } catch (e) {
       rethrow;
     }

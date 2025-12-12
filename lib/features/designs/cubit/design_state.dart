@@ -50,31 +50,31 @@ class DesignUploadError extends DesignState {
   List<Object?> get props => [message];
 }
 
-class DesignDownloading extends DesignState {
+class DesignDownloading extends DesignsLoaded {
   final int designId;
 
-  const DesignDownloading(this.designId);
+  const DesignDownloading(super.designs, this.designId);
 
   @override
-  List<Object?> get props => [designId];
+  List<Object?> get props => [designs, designId];
 }
 
-class DesignDownloaded extends DesignState {
+class DesignDownloaded extends DesignsLoaded {
   final int designId;
   final String filePath;
 
-  const DesignDownloaded(this.designId, this.filePath);
+  const DesignDownloaded(super.designs, this.designId, this.filePath);
 
   @override
-  List<Object?> get props => [designId, filePath];
+  List<Object?> get props => [designs, designId, filePath];
 }
 
-class DesignDownloadError extends DesignState {
+class DesignDownloadError extends DesignsLoaded {
   final int designId;
   final String message;
 
-  const DesignDownloadError(this.designId, this.message);
+  const DesignDownloadError(super.designs, this.designId, this.message);
 
   @override
-  List<Object?> get props => [designId, message];
+  List<Object?> get props => [designs, designId, message];
 }

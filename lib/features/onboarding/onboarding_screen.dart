@@ -21,10 +21,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   int _currentPage = 0;
 
   late AnimationController _fadeController;
-  late AnimationController _slideController;
   late AnimationController _scaleController;
   late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
   late Animation<double> _scaleAnimation;
 
   final List<OnboardingPageData> _pages = [
@@ -53,15 +51,11 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     super.initState();
     _fadeController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
-    );
-    _slideController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 300),
     );
     _scaleController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 200),
     );
 
     _fadeAnimation = Tween<double>(
@@ -69,17 +63,12 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       end: 1.0,
     ).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeOut));
 
-    _slideAnimation =
-        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
-          CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
-        );
-
-    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(parent: _scaleController, curve: Curves.elasticOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 0.9,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _scaleController, curve: Curves.easeOut));
 
     _fadeController.forward();
-    _slideController.forward();
     _scaleController.forward();
   }
 
@@ -87,7 +76,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   void dispose() {
     _pageController.dispose();
     _fadeController.dispose();
-    _slideController.dispose();
     _scaleController.dispose();
     super.dispose();
   }
@@ -97,18 +85,16 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       _currentPage = index;
     });
     _fadeController.reset();
-    _slideController.reset();
     _scaleController.reset();
     _fadeController.forward();
-    _slideController.forward();
     _scaleController.forward();
   }
 
   void _nextPage() {
     if (_currentPage < _pages.length - 1) {
       _pageController.nextPage(
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOutCubic,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
       );
     } else {
       _navigateToLogin();
@@ -144,7 +130,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                     alignment: Alignment.topLeft,
                     child: Bounce(
                       onTap: _navigateToLogin,
-                      duration: const Duration(milliseconds: 120),
+                      duration: const Duration(milliseconds: 80),
                       child: Container(
                         padding: EdgeInsets.symmetric(
                           horizontal: 16.w,
@@ -176,8 +162,11 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                     controller: _pageController,
                     onPageChanged: _onPageChanged,
                     itemCount: _pages.length,
+                    physics: const ClampingScrollPhysics(),
                     itemBuilder: (context, index) {
-                      return _buildPage(_pages[index], index);
+                      return RepaintBoundary(
+                        child: _buildPage(_pages[index], index),
+                      );
                     },
                   ),
                 ),
@@ -185,18 +174,11 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 _buildPageIndicators(),
 
                 AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
+                  duration: const Duration(milliseconds: 200),
+                  switchInCurve: Curves.easeOut,
+                  switchOutCurve: Curves.easeIn,
                   transitionBuilder: (child, animation) {
-                    return FadeTransition(
-                      opacity: animation,
-                      child: SlideTransition(
-                        position: Tween<Offset>(
-                          begin: const Offset(0, 0.2),
-                          end: Offset.zero,
-                        ).animate(animation),
-                        child: child,
-                      ),
-                    );
+                    return FadeTransition(opacity: animation, child: child);
                   },
                   child: Padding(
                     key: ValueKey(_currentPage),
@@ -216,8 +198,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                             child: Bounce(
                               onTap: () {
                                 _pageController.previousPage(
-                                  duration: const Duration(milliseconds: 400),
-                                  curve: Curves.easeInOutCubic,
+                                  duration: const Duration(milliseconds: 250),
+                                  curve: Curves.easeOut,
                                 );
                               },
                               child: Text(
@@ -245,149 +227,108 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   Widget _buildPage(OnboardingPageData pageData, int index) {
     return FadeTransition(
       opacity: _fadeAnimation,
-      child: SlideTransition(
-        position: _slideAnimation,
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 18.w),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ScaleTransition(
-                scale: _scaleAnimation,
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: Container(
-                    height: 300.h,
-                    width: double.infinity,
-                    margin: EdgeInsets.only(bottom: 16.h),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(30.r),
-                      boxShadow: [
-                        BoxShadow(
-                          color: pageData.gradient.colors.first.withOpacity(
-                            0.2,
-                          ),
-                          blurRadius: 30,
-                          spreadRadius: 5,
-                          offset: const Offset(0, 10),
-                        ),
-                        BoxShadow(
-                          color: pageData.gradient.colors.last.withOpacity(0.1),
-                          blurRadius: 20,
-                          spreadRadius: 2,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 18.w),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ScaleTransition(
+              scale: _scaleAnimation,
+              child: Container(
+                height: 300.h,
+                width: double.infinity,
+                margin: EdgeInsets.only(bottom: 16.h),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(30.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: pageData.gradient.colors.first.withOpacity(0.2),
+                      blurRadius: 30,
+                      spreadRadius: 5,
+                      offset: const Offset(0, 10),
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(30.r),
-                      child: Stack(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: pageData.gradient.colors
-                                    .map((c) => c.withOpacity(0.1))
-                                    .toList(),
-                              ),
-                            ),
-                          ),
-
-                          Center(
-                            child: Lottie.asset(
-                              pageData.lottieAsset,
-                              fit: BoxFit.contain,
-                              repeat: true,
-                              animate: true,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  decoration: BoxDecoration(
-                                    gradient: pageData.gradient,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  padding: EdgeInsets.all(40.w),
-                                  child: Icon(
-                                    _getIconForPage(index),
-                                    size: 120.sp,
-                                    color: AppColors.textOnPrimary,
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
+                    BoxShadow(
+                      color: pageData.gradient.colors.last.withOpacity(0.1),
+                      blurRadius: 20,
+                      spreadRadius: 2,
+                      offset: const Offset(0, 5),
                     ),
-                  ),
+                  ],
                 ),
-              ),
-
-              FadeTransition(
-                opacity: _fadeAnimation,
-                child: SlideTransition(
-                  position:
-                      Tween<Offset>(
-                        begin: const Offset(0, 0.2),
-                        end: Offset.zero,
-                      ).animate(
-                        CurvedAnimation(
-                          parent: _fadeController,
-                          curve: const Interval(
-                            0.3,
-                            1.0,
-                            curve: Curves.easeOut,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(30.r),
+                  child: Stack(
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: pageData.gradient.colors
+                                .map((c) => c.withOpacity(0.1))
+                                .toList(),
                           ),
                         ),
                       ),
-                  child: Text(
-                    pageData.title,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 24.sp,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
-                      height: 1.3,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                ),
-              ),
-
-              SizedBox(height: 16.h),
-
-              FadeTransition(
-                opacity: _fadeAnimation,
-                child: SlideTransition(
-                  position:
-                      Tween<Offset>(
-                        begin: const Offset(0, 0.2),
-                        end: Offset.zero,
-                      ).animate(
-                        CurvedAnimation(
-                          parent: _fadeController,
-                          curve: const Interval(
-                            0.5,
-                            1.0,
-                            curve: Curves.easeOut,
+                      Center(
+                        child: RepaintBoundary(
+                          child: Lottie.asset(
+                            pageData.lottieAsset,
+                            fit: BoxFit.contain,
+                            repeat: true,
+                            animate: true,
+                            frameRate: FrameRate(30),
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                decoration: BoxDecoration(
+                                  gradient: pageData.gradient,
+                                  shape: BoxShape.circle,
+                                ),
+                                padding: EdgeInsets.all(40.w),
+                                child: Icon(
+                                  _getIconForPage(index),
+                                  size: 120.sp,
+                                  color: AppColors.textOnPrimary,
+                                ),
+                              );
+                            },
                           ),
                         ),
                       ),
-                  child: Text(
-                    pageData.description,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.textSecondary,
-                      height: 1,
-                    ),
+                    ],
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+            FadeTransition(
+              opacity: _fadeAnimation,
+              child: Text(
+                pageData.title,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 24.sp,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                  height: 1.3,
+                  letterSpacing: -0.5,
+                ),
+              ),
+            ),
+            SizedBox(height: 16.h),
+            FadeTransition(
+              opacity: _fadeAnimation,
+              child: Text(
+                pageData.description,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textSecondary,
+                  height: 1,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -410,8 +351,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   Widget _buildIndicator(int index) {
     final isActive = index == _currentPage;
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOutCubic,
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
       margin: EdgeInsets.symmetric(horizontal: 4.w),
       height: isActive ? 10.h : 8.h,
       width: isActive ? 32.w : 8.w,
