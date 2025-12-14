@@ -33,7 +33,7 @@ class DesignsError extends DesignState {
 class DesignUploading extends DesignState {}
 
 class DesignUploaded extends DesignState {
-  final Design design;
+  final Design? design;
 
   const DesignUploaded(this.design);
 
@@ -52,29 +52,42 @@ class DesignUploadError extends DesignState {
 
 class DesignDownloading extends DesignsLoaded {
   final int designId;
+  final bool isFile; // true for file download, false for image download
 
-  const DesignDownloading(super.designs, this.designId);
+  const DesignDownloading(super.designs, this.designId, {this.isFile = false});
 
   @override
-  List<Object?> get props => [designs, designId];
+  List<Object?> get props => [designs, designId, isFile];
 }
 
 class DesignDownloaded extends DesignsLoaded {
   final int designId;
   final String filePath;
+  final bool isFile; // true for file download, false for image download
 
-  const DesignDownloaded(super.designs, this.designId, this.filePath);
+  const DesignDownloaded(
+    super.designs,
+    this.designId,
+    this.filePath, {
+    this.isFile = false,
+  });
 
   @override
-  List<Object?> get props => [designs, designId, filePath];
+  List<Object?> get props => [designs, designId, filePath, isFile];
 }
 
 class DesignDownloadError extends DesignsLoaded {
   final int designId;
   final String message;
+  final bool isFile; // true for file download, false for image download
 
-  const DesignDownloadError(super.designs, this.designId, this.message);
+  const DesignDownloadError(
+    super.designs,
+    this.designId,
+    this.message, {
+    this.isFile = false,
+  });
 
   @override
-  List<Object?> get props => [designs, designId, message];
+  List<Object?> get props => [designs, designId, message, isFile];
 }

@@ -30,7 +30,10 @@ class MaintenanceRepository {
     }
   }
 
-  Future<MediaUploadResponse> uploadImage(File imageFile) async {
+  Future<MediaUploadResponse> uploadImage(
+    File imageFile, {
+    ProgressCallback? onSendProgress,
+  }) async {
     try {
       final fileName = imageFile.path.split('/').last;
       final formData = FormData.fromMap({
@@ -44,6 +47,7 @@ class MaintenanceRepository {
         ApiConstants.mediaUpload,
         data: formData,
         options: Options(headers: {'Content-Type': 'multipart/form-data'}),
+        onSendProgress: onSendProgress,
       );
 
       if (response.statusCode != null &&

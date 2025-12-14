@@ -20,9 +20,15 @@ class MaintenanceCubit extends Cubit<MaintenanceState> {
   }
 
   Future<void> uploadImage(File imageFile) async {
-    emit(ImageUploading());
+    emit(const ImageUploading(progress: 0.0));
     try {
-      final response = await _repository.uploadImage(imageFile);
+      final response = await _repository.uploadImage(
+        imageFile,
+        onSendProgress: (sent, total) {
+          final progress = sent / total;
+          emit(ImageUploading(progress: progress));
+        },
+      );
       emit(ImageUploaded(response.data.id));
     } catch (e) {
       emit(ImageUploadError(e.toString()));

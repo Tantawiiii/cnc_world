@@ -30,7 +30,14 @@ class EngineersError extends MaintenanceState {
   List<Object?> get props => [message];
 }
 
-class ImageUploading extends MaintenanceState {}
+class ImageUploading extends MaintenanceState {
+  final double progress;
+
+  const ImageUploading({this.progress = 0.0});
+
+  @override
+  List<Object?> get props => [progress];
+}
 
 class ImageUploaded extends MaintenanceState {
   final int imageId;

@@ -32,8 +32,21 @@ final class AppTexts {
   static const String camera = 'الكاميرا';
   static const String gallery = 'المعرض';
   static const String imageUploadFailed = 'فشل رفع الصورة';
+  static const String imageUploadFailedWithError = 'فشل رفع الصورة:';
+  static const String imageSelectionError = 'خطأ في اختيار الصورة:';
   static const String uploadingImage = 'جاري الرفع...';
+  static const String pickingImage = 'جاري اختيار الصورة...';
   static const String tapToSelect = 'انقر للاختيار';
+  static const String fileUploadSuccess = 'تم رفع الملف بنجاح';
+  static const String fileUploadFailed = 'فشل رفع الملف:';
+  static const String fileSelectionError = 'خطأ في اختيار الملف:';
+  static const String uploadingFile = 'جاري رفع الملف...';
+  static const String imageAndFileRequired = 'يرجى رفع الصورة والملف';
+  static const String fileDownloadSuccess = 'تم تحميل الملف بنجاح';
+  static const String imageDownloadSuccess = 'تم تحميل الصورة بنجاح';
+  static const String fileDownloadFailed = 'فشل تحميل الملف:';
+  static const String imageDownloadFailed = 'فشل تحميل الصورة:';
+  static const String errorPickingMedia = 'Error picking media:';
 
   // Login
   static const String login = 'تسجيل الدخول';
@@ -65,6 +78,8 @@ final class AppTexts {
   static const String nameRequired = 'يرجى إدخال الاسم';
   static const String address = 'العنوان';
   static const String addressRequired = 'يرجى إدخال العنوان';
+  static const String country = 'الدولة';
+  static const String countryRequired = 'يرجى اختيار الدولة';
   static const String city = 'المدينة';
   static const String cityRequired = 'يرجى إدخال المدينة';
   static const String state = 'المنطقة';
@@ -177,4 +192,48 @@ final class AppTexts {
   // Used Machines Disclaimer
   static const String usedMachinesDisclaimer =
       'الابليكشن مسؤول بالكامل عن معاينه ونقل وتركيب والتدريب علي الماكينه';
+
+  // Contact Us
+  static const String contactUs = 'اتصل بنا';
+  static const String complaint = 'شكوى';
+  static const String email = 'البريد الإلكتروني';
+  static const String emailRequired = 'يرجى إدخال البريد الإلكتروني';
+  static const String invalidEmail = 'يرجى إدخال بريد إلكتروني صحيح';
+  static const String subject = 'الموضوع';
+  static const String subjectRequired = 'يرجى إدخال الموضوع';
+  static const String subjectMinLength = 'يجب أن يكون الموضوع 5 أحرف على الأقل';
+  static const String message = 'الرسالة';
+  static const String messageHint = 'أدخل رسالتك';
+  static const String messageRequired = 'يرجى إدخال الرسالة';
+  static const String messageMinLength =
+      'يجب أن تكون الرسالة 10 أحرف على الأقل';
+  static const String nameInvalidFormat = 'تنسيق الاسم غير صحيح';
+  static const String submitContact = 'إرسال';
+  static const String submitComplaint = 'إرسال الشكوى';
+  static const String contactSuccess = 'تم إرسال رسالتك بنجاح';
+  static const String complaintSuccess = 'تم إرسال شكواك بنجاح';
+
+  // Designs
+  static const String addDesign = 'إضافة تصميم';
+  static const String designName = 'اسم التصميم';
+  static const String designNameHint = 'أدخل اسم التصميم';
+  static const String designNameRequired = 'يرجى إدخال اسم التصميم';
+  static const String price = 'السعر';
+  static const String priceHint = 'أدخل السعر';
+  static const String priceRequired = 'يرجى إدخال السعر';
+  static const String designImage = 'صورة التصميم';
+  static const String designFile = 'ملف التصميم';
+  static const String addDesignButton = 'إضافة التصميم';
+  static const String designAddedSuccess = 'تم إضافة التصميم بنجاح';
+  static const String noDesignsAvailable = 'لا توجد تصميمات متاحة';
+  static const String active = 'نشط';
+  static const String file = 'ملف';
+  static const String unknown = 'غير معروف';
+  static const String video = 'فيديو';
+  static const String videoUnavailable = 'Video unavailable';
+
+  // General
+  static const String confirm = 'تأكيد';
+  static const String yes = 'نعم';
+  static const String no = 'لا';
 }

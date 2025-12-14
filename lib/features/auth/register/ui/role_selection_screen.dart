@@ -1,13 +1,12 @@
-
 import 'package:cnc_world/features/auth/register/ui/widgets/build_role_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/constant/app_colors.dart';
 import '../../../../core/constant/app_texts.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../data/models/register_models.dart';
-
 
 class RoleSelectionScreen extends StatefulWidget {
   const RoleSelectionScreen({super.key});
@@ -83,36 +82,50 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                         ),
                       );
                     },
-                    child: Text(
-                      AppTexts.selectRole,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 32.sp,
-                        fontWeight: FontWeight.w800,
-                        foreground: Paint()
-                          ..shader = AppColors.brandGradient.createShader(
-                            const Rect.fromLTWH(0.0, 0.0, 200.0, 70.0),
-                          ),
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: 12.h),
-
-                  TweenAnimationBuilder<double>(
-                    duration: const Duration(milliseconds: 600),
-                    tween: Tween(begin: 0.0, end: 1.0),
-                    curve: Curves.easeOut,
-                    builder: (context, value, child) {
-                      return Opacity(opacity: value, child: child);
-                    },
-                    child: Text(
-                      AppTexts.selectRoleSubtitle,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        color: AppColors.textSecondary,
-                      ),
+                    child: Builder(
+                      builder: (context) {
+                        final localizations = AppLocalizations.of(context);
+                        return Column(
+                          children: [
+                            Text(
+                              localizations?.selectRole ?? AppTexts.selectRole,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 32.sp,
+                                fontWeight: FontWeight.w800,
+                                foreground: Paint()
+                                  ..shader = AppColors.brandGradient
+                                      .createShader(
+                                        const Rect.fromLTWH(
+                                          0.0,
+                                          0.0,
+                                          200.0,
+                                          70.0,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                            SizedBox(height: 12.h),
+                            TweenAnimationBuilder<double>(
+                              duration: const Duration(milliseconds: 600),
+                              tween: Tween(begin: 0.0, end: 1.0),
+                              curve: Curves.easeOut,
+                              builder: (context, value, child) {
+                                return Opacity(opacity: value, child: child);
+                              },
+                              child: Text(
+                                localizations?.selectRoleSubtitle ??
+                                    AppTexts.selectRoleSubtitle,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ),
 
@@ -136,10 +149,19 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                               ),
                             );
                           },
-                          child: RoleCard(
-                            title: AppTexts.roleUser,
-                            icon: Icons.person_outline,
-                            role: UserRole.user,
+                          child: Builder(
+                            builder: (context) {
+                              final localizations = AppLocalizations.of(
+                                context,
+                              );
+                              return RoleCard(
+                                title:
+                                    localizations?.roleUser ??
+                                    AppTexts.roleUser,
+                                icon: Icons.person_outline,
+                                role: UserRole.user,
+                              );
+                            },
                           ),
                         ),
                         AnimatedBuilder(
@@ -153,10 +175,19 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                               ),
                             );
                           },
-                          child: RoleCard(
-                            title: AppTexts.roleEngineer,
-                            icon: Icons.engineering_outlined,
-                            role: UserRole.engineer,
+                          child: Builder(
+                            builder: (context) {
+                              final localizations = AppLocalizations.of(
+                                context,
+                              );
+                              return RoleCard(
+                                title:
+                                    localizations?.roleEngineer ??
+                                    AppTexts.roleEngineer,
+                                icon: Icons.engineering_outlined,
+                                role: UserRole.engineer,
+                              );
+                            },
                           ),
                         ),
                         AnimatedBuilder(
@@ -170,10 +201,19 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                               ),
                             );
                           },
-                          child: RoleCard(
-                            title: AppTexts.roleSeller,
-                            icon: Icons.store_outlined,
-                            role: UserRole.seller,
+                          child: Builder(
+                            builder: (context) {
+                              final localizations = AppLocalizations.of(
+                                context,
+                              );
+                              return RoleCard(
+                                title:
+                                    localizations?.roleSeller ??
+                                    AppTexts.roleSeller,
+                                icon: Icons.store_outlined,
+                                role: UserRole.seller,
+                              );
+                            },
                           ),
                         ),
                         AnimatedBuilder(
@@ -187,10 +227,19 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                               ),
                             );
                           },
-                          child: RoleCard(
-                            title: AppTexts.roleMerchant,
-                            icon: Icons.business_outlined,
-                            role: UserRole.merchant,
+                          child: Builder(
+                            builder: (context) {
+                              final localizations = AppLocalizations.of(
+                                context,
+                              );
+                              return RoleCard(
+                                title:
+                                    localizations?.roleMerchant ??
+                                    AppTexts.roleMerchant,
+                                icon: Icons.business_outlined,
+                                role: UserRole.merchant,
+                              );
+                            },
                           ),
                         ),
                       ],
@@ -209,26 +258,38 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(
-                          AppTexts.alreadyHaveAccount,
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                        SizedBox(width: 8.w),
-                        GestureDetector(
-                          onTap: () => Navigator.of(
-                            context,
-                          ).pushReplacementNamed(AppRoutes.login),
-                          child: Text(
-                            AppTexts.backToLogin,
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.primary,
-                            ),
-                          ),
+                        Builder(
+                          builder: (context) {
+                            final localizations = AppLocalizations.of(context);
+                            return Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  localizations?.alreadyHaveAccount ??
+                                      AppTexts.alreadyHaveAccount,
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                                SizedBox(width: 8.w),
+                                GestureDetector(
+                                  onTap: () => Navigator.of(
+                                    context,
+                                  ).pushReplacementNamed(AppRoutes.login),
+                                  child: Text(
+                                    localizations?.backToLogin ??
+                                        AppTexts.backToLogin,
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
                         ),
                       ],
                     ),

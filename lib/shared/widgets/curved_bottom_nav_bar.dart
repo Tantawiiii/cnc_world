@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../core/constant/app_colors.dart';
 import '../../core/constant/app_texts.dart';
+import '../../core/localization/app_localizations.dart';
 
 class CurvedBottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -15,43 +16,52 @@ class CurvedBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipPath(
-      clipper: _BottomNavBarClipper(),
-      child: Container(
-        height: 75.h,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppColors.borderLight, AppColors.borderLight],
+    return Container(
+      height: 90.h,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadowLight,
+            blurRadius: 10,
+            offset: const Offset(0, -2),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.3),
-              blurRadius: 20,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            _buildNavItem(
-              icon: Icons.home_rounded,
-              label: AppTexts.home,
-              index: 0,
-              isActive: currentIndex == 0,
-            ),
-            SizedBox(width: 80.w), // Space for notch
-            _buildNavItem(
-              icon: Icons.settings_rounded,
-              label: AppTexts.settings,
-              index: 1,
-              isActive: currentIndex == 1,
-            ),
-          ],
-        ),
+        ],
+      ),
+      child: Builder(
+        builder: (context) {
+          final localizations = AppLocalizations.of(context);
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              _buildNavItem(
+                icon: Icons.home_rounded,
+                label: localizations?.home ?? AppTexts.home,
+                index: 0,
+                isActive: currentIndex == 0,
+              ),
+              _buildNavItem(
+                icon: Icons.contact_mail_rounded,
+                label: localizations?.contactUs ?? AppTexts.contactUs,
+                index: 1,
+                isActive: currentIndex == 1,
+              ),
+              _buildNavItem(
+                icon: Icons.report_problem_rounded,
+                label: localizations?.complaint ?? AppTexts.complaint,
+                index: 2,
+                isActive: currentIndex == 2,
+              ),
+              _buildNavItem(
+                icon: Icons.settings_rounded,
+                label: localizations?.settings ?? AppTexts.settings,
+                index: 3,
+                isActive: currentIndex == 3,
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -62,131 +72,33 @@ class CurvedBottomNavBar extends StatelessWidget {
     required int index,
     required bool isActive,
   }) {
-    return GestureDetector(
-      onTap: () => onTap(index),
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: EdgeInsets.all(8.w),
-              decoration: BoxDecoration(
-                color: isActive ? AppColors.textOnPrimary : Colors.transparent,
-                shape: BoxShape.circle,
-                boxShadow: isActive
-                    ? [
-                        BoxShadow(
-                          color: AppColors.textOnPrimary.withValues(alpha: 0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Icon(
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => onTap(index),
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          padding: EdgeInsets.symmetric(vertical: 8.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
                 icon,
-                color: isActive
-                    ? AppColors.primary
-                    : AppColors.textOnPrimary.withValues(alpha: 0.7),
+                color: isActive ? AppColors.primary : AppColors.textSecondary,
                 size: 24.sp,
               ),
-            ),
-            SizedBox(height: 4.h),
-            Text(
-              label,
-              style: TextStyle(
-                color: isActive
-                    ? AppColors.textOnPrimary
-                    : AppColors.textOnPrimary.withValues(alpha: 0.7),
-                fontSize: 10.sp,
-                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+              SizedBox(height: 4.h),
+              Text(
+                label,
+                style: TextStyle(
+                  color: isActive ? AppColors.primary : AppColors.textSecondary,
+                  fontSize: 11.sp,
+                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
-}
-
-class _BottomNavBarClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    final path = Path();
-    final notchSize = 60.w;
-    final notchRadius = 25.r;
-    final curveHeight = 20.h;
-
-    // Start from left bottom
-    path.moveTo(0, size.height);
-
-    // Line to start of left curve
-    path.lineTo((size.width - notchSize) / 2 - notchRadius, size.height);
-
-    // Left curve up
-    path.quadraticBezierTo(
-      (size.width - notchSize) / 2 - notchRadius,
-      size.height - curveHeight,
-      (size.width - notchSize) / 2,
-      size.height - curveHeight,
-    );
-
-    // Create notch (curved cutout)
-    final notchCenterX = size.width / 2;
-    final notchTopY = size.height - curveHeight - notchSize / 2;
-
-    // Left side of notch
-    path.quadraticBezierTo(
-      notchCenterX - notchSize / 2 + notchRadius,
-      size.height - curveHeight,
-      notchCenterX - notchSize / 2 + notchRadius,
-      notchTopY - notchRadius,
-    );
-
-    // Top curve of notch
-    path.arcToPoint(
-      Offset(
-        notchCenterX + notchSize / 2 - notchRadius,
-        notchTopY - notchRadius,
-      ),
-      radius: Radius.circular(notchRadius),
-      clockwise: false,
-      largeArc: false,
-    );
-
-    // Right side of notch
-    path.quadraticBezierTo(
-      notchCenterX + notchSize / 2 - notchRadius,
-      size.height - curveHeight,
-      (size.width + notchSize) / 2,
-      size.height - curveHeight,
-    );
-
-    // Right curve down
-    path.quadraticBezierTo(
-      (size.width + notchSize) / 2 + notchRadius,
-      size.height - curveHeight,
-      (size.width + notchSize) / 2 + notchRadius,
-      size.height,
-    );
-
-    // Line to right bottom
-    path.lineTo(size.width, size.height);
-
-    // Line to right top
-    path.lineTo(size.width, 0);
-
-    // Line to left top
-    path.lineTo(0, 0);
-
-    // Close path
-    path.close();
-
-    return path;
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }

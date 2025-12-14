@@ -28,4 +28,6 @@ final class AppRoutes {
   static const String sellers = '/sellers';
   static const String sellerDetail = '/seller-detail';
   static const String profile = '/profile';
+  static const String contactUs = '/contact-us';
+  static const String complaint = '/complaint';
 }

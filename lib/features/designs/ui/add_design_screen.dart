@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:bounce/bounce.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -28,6 +29,7 @@ class _AddDesignScreenState extends State<AddDesignScreen> {
 
   File? _selectedImage;
   File? _selectedFile;
+  String? _selectedFileName;
   int? _imageId;
   int? _fileId;
   bool _isUploadingImage = false;
@@ -69,7 +71,7 @@ class _AddDesignScreenState extends State<AddDesignScreen> {
             setState(() => _isUploadingImage = false);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('فشل رفع الصورة: $e'),
+                content: Text('${AppTexts.imageUploadFailedWithError} $e'),
                 backgroundColor: AppColors.error,
               ),
             );
@@ -80,7 +82,7 @@ class _AddDesignScreenState extends State<AddDesignScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('خطأ في اختيار الصورة: $e'),
+            content: Text('${AppTexts.imageSelectionError} $e'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -90,18 +92,20 @@ class _AddDesignScreenState extends State<AddDesignScreen> {
 
   Future<void> _pickFile() async {
     try {
-      // For file picking, we'll use file_picker or similar
-      // For now, let's use image picker as a fallback
-      final result = await context.pickAndCropImage();
-      if (result != null && mounted) {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.any,
+        allowMultiple: false,
+      );
+
+      if (result != null && result.files.single.path != null && mounted) {
+        final file = File(result.files.single.path!);
         setState(() {
-          _selectedFile = result.file;
+          _selectedFile = file;
+          _selectedFileName = result.files.single.name;
           _isUploadingFile = true;
         });
         try {
-          final fileId = await context.read<DesignCubit>().uploadFile(
-            result.file,
-          );
+          final fileId = await context.read<DesignCubit>().uploadFile(file);
           if (mounted) {
             setState(() {
               _fileId = fileId;
@@ -109,7 +113,7 @@ class _AddDesignScreenState extends State<AddDesignScreen> {
             });
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('تم رفع الملف بنجاح'),
+                content: Text(AppTexts.fileUploadSuccess),
                 backgroundColor: AppColors.success,
               ),
             );
@@ -117,9 +121,10 @@ class _AddDesignScreenState extends State<AddDesignScreen> {
         } catch (e) {
           if (mounted) {
             setState(() => _isUploadingFile = false);
+
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('فشل رفع الملف: $e'),
+                content: Text('${AppTexts.fileUploadFailed} $e'),
                 backgroundColor: AppColors.error,
               ),
             );
@@ -128,9 +133,11 @@ class _AddDesignScreenState extends State<AddDesignScreen> {
       }
     } catch (e) {
       if (mounted) {
+        setState(() => _isUploadingFile = false);
+        print('خطأ في اختيار الملف: $e');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('خطأ في اختيار الملف: $e'),
+            content: Text('${AppTexts.fileSelectionError} $e'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -138,12 +145,12 @@ class _AddDesignScreenState extends State<AddDesignScreen> {
     }
   }
 
-  void _submitDesign() {
+  void _submitDesign(BuildContext context) {
     if (!_formKey.currentState!.validate()) return;
     if (_imageId == null || _fileId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('يرجى رفع الصورة والملف'),
+          content: Text(AppTexts.imageAndFileRequired),
           backgroundColor: AppColors.error,
         ),
       );
@@ -169,6 +176,9 @@ class _AddDesignScreenState extends State<AddDesignScreen> {
       image: _imageId,
     );
 
+    print(
+      'AddDesignScreen: Calling addDesign with request: ${request.toJson()}',
+    );
     context.read<DesignCubit>().addDesign(request);
   }
 
@@ -189,144 +199,170 @@ class _AddDesignScreenState extends State<AddDesignScreen> {
                 ),
               ),
               child: SafeArea(
-                child: BlocListener<DesignCubit, DesignState>(
+                child: BlocConsumer<DesignCubit, DesignState>(
+                  listenWhen: (previous, current) {
+                    // Only listen to upload states
+                    return current is DesignUploaded ||
+                        current is DesignUploadError;
+                  },
                   listener: (context, state) {
+                    print(
+                      'AddDesignScreen: BlocConsumer listener received state: ${state.runtimeType}',
+                    );
                     if (state is DesignUploaded) {
+                      print(
+                        'AddDesignScreen: DesignUploaded detected, showing toast',
+                      );
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('تم إضافة التصميم بنجاح'),
+                          content: Text(AppTexts.designAddedSuccess),
                           backgroundColor: AppColors.success,
+                          duration: const Duration(seconds: 2),
                         ),
                       );
-                      Navigator.of(context).pop();
+                      // Go back after showing toast
+                      Future.delayed(const Duration(milliseconds: 100), () {
+                        if (mounted) {
+                          print('AddDesignScreen: Navigating back');
+                          Navigator.of(context).pop();
+                        }
+                      });
                     } else if (state is DesignUploadError) {
+                      print(
+                        'AddDesignScreen: DesignUploadError detected: ${state.message}',
+                      );
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(state.message),
                           backgroundColor: AppColors.error,
+                          duration: const Duration(seconds: 3),
                         ),
                       );
                     }
                   },
-                  child: SingleChildScrollView(
-                    padding: EdgeInsets.all(16.w),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              IconButton(
-                                icon: Icon(
-                                  Icons.arrow_back_ios,
-                                  color: AppColors.textPrimary,
-                                ),
-                                onPressed: () => Navigator.of(context).pop(),
-                              ),
-                              Expanded(
-                                child: Text(
-                                  'إضافة تصميم',
-                                  style: TextStyle(
-                                    fontSize: 22.sp,
-                                    fontWeight: FontWeight.w800,
+                  builder: (context, state) {
+                    return SingleChildScrollView(
+                      padding: EdgeInsets.all(16.w),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.arrow_back_ios,
                                     color: AppColors.textPrimary,
                                   ),
+                                  onPressed: () => Navigator.of(context).pop(),
                                 ),
+                                Expanded(
+                                  child: Text(
+                                    AppTexts.addDesign,
+                                    style: TextStyle(
+                                      fontSize: 22.sp,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 16.h),
+
+                            // Name
+                            Text(
+                              AppTexts.designName,
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
                               ),
-                            ],
-                          ),
-                          SizedBox(height: 16.h),
-
-                          // Name
-                          Text(
-                            'اسم التصميم',
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
                             ),
-                          ),
-                          SizedBox(height: 12.h),
-                          AppTextField(
-                            controller: _nameController,
-                            hint: 'أدخل اسم التصميم',
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'يرجى إدخال اسم التصميم';
-                              }
-                              return null;
-                            },
-                          ),
-                          SizedBox(height: 24.h),
-
-                          // Price
-                          Text(
-                            'السعر',
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
+                            SizedBox(height: 12.h),
+                            AppTextField(
+                              controller: _nameController,
+                              hint: AppTexts.designNameHint,
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return AppTexts.designNameRequired;
+                                }
+                                return null;
+                              },
                             ),
-                          ),
-                          SizedBox(height: 12.h),
-                          AppTextField(
-                            controller: _priceController,
-                            hint: 'أدخل السعر',
-                            keyboardType: TextInputType.number,
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'يرجى إدخال السعر';
-                              }
-                              if (double.tryParse(value.trim()) == null) {
-                                return AppTexts.invalidPrice;
-                              }
-                              return null;
-                            },
-                          ),
-                          SizedBox(height: 24.h),
+                            SizedBox(height: 24.h),
 
-                          // Image
-                          Text(
-                            'صورة التصميم',
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
+                            // Price
+                            Text(
+                              AppTexts.price,
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
                             ),
-                          ),
-                          SizedBox(height: 12.h),
-                          _buildImageUploadSection(),
-                          SizedBox(height: 24.h),
-
-                          // File
-                          Text(
-                            'ملف التصميم',
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
+                            SizedBox(height: 12.h),
+                            AppTextField(
+                              controller: _priceController,
+                              hint: AppTexts.priceHint,
+                              keyboardType: TextInputType.number,
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return AppTexts.priceRequired;
+                                }
+                                if (double.tryParse(value.trim()) == null) {
+                                  return AppTexts.invalidPrice;
+                                }
+                                return null;
+                              },
                             ),
-                          ),
-                          SizedBox(height: 12.h),
-                          _buildFileUploadSection(),
-                          SizedBox(height: 32.h),
+                            SizedBox(height: 24.h),
 
-                          // Submit Button
-                          BlocBuilder<DesignCubit, DesignState>(
-                            builder: (context, state) {
-                              final isUploading = state is DesignUploading;
-                              return PrimaryButton(
-                                title: 'إضافة التصميم',
-                                onPressed: isUploading ? null : _submitDesign,
-                                isLoading: isUploading,
-                              );
-                            },
-                          ),
-                        ],
+                            // Image
+                            Text(
+                              AppTexts.designImage,
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            SizedBox(height: 12.h),
+                            _buildImageUploadSection(),
+                            SizedBox(height: 24.h),
+
+                            // File
+                            Text(
+                              AppTexts.designFile,
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            SizedBox(height: 12.h),
+                            _buildFileUploadSection(),
+                            SizedBox(height: 32.h),
+
+                            // Submit Button
+                            PrimaryButton(
+                              title: AppTexts.addDesignButton,
+                              onPressed: state is DesignUploading
+                                  ? null
+                                  : () {
+                                      print(
+                                        'AddDesignScreen: Submit button pressed',
+                                      );
+                                      _submitDesign(context);
+                                    },
+                              isLoading: state is DesignUploading,
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
               ),
             ),
@@ -444,7 +480,7 @@ class _AddDesignScreenState extends State<AddDesignScreen> {
                     CircularProgressIndicator(color: AppColors.primary),
                     SizedBox(height: 12.h),
                     Text(
-                      'جاري رفع الملف...',
+                      AppTexts.uploadingFile,
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 14.sp,
@@ -454,24 +490,43 @@ class _AddDesignScreenState extends State<AddDesignScreen> {
                 ),
               )
             : _fileId != null
-            ? Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.check_circle,
-                    color: AppColors.success,
-                    size: 32.sp,
+            ? Padding(
+                padding: EdgeInsets.all(12.w),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.check_circle,
+                        color: AppColors.success,
+                        size: 28.sp,
+                      ),
+                      SizedBox(height: 8.h),
+                      Text(
+                        AppTexts.fileUploadSuccess,
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: AppColors.success,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (_selectedFileName != null) ...[
+                        SizedBox(height: 6.h),
+                        Text(
+                          _selectedFileName!,
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            color: AppColors.textSecondary,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ],
                   ),
-                  SizedBox(width: 12.w),
-                  Text(
-                    'تم رفع الملف بنجاح',
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      color: AppColors.success,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
+                ),
               )
             : Column(
                 mainAxisAlignment: MainAxisAlignment.center,

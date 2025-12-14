@@ -205,13 +205,13 @@ class AddDesignRequest {
 }
 
 class AddDesignResponse {
-  final Design data;
+  final Design? data;
   final String result;
   final String message;
   final int status;
 
   AddDesignResponse({
-    required this.data,
+    this.data,
     required this.result,
     required this.message,
     required this.status,
@@ -219,7 +219,7 @@ class AddDesignResponse {
 
   factory AddDesignResponse.fromJson(Map<String, dynamic> json) {
     return AddDesignResponse(
-      data: Design.fromJson(json['data'] ?? {}),
+      data: json['data'] != null ? Design.fromJson(json['data']) : null,
       result: json['result'] ?? '',
       message: json['message'] ?? '',
       status: json['status'] ?? 200,

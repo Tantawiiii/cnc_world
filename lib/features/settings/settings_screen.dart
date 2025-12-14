@@ -6,9 +6,12 @@ import 'package:shimmer/shimmer.dart';
 
 import '../../core/constant/app_colors.dart';
 import '../../core/constant/app_texts.dart';
+import '../../core/localization/app_language.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/routing/app_routes.dart';
 import '../../core/di/inject.dart';
 import '../../core/services/storage_service.dart';
+import '../../main.dart';
 import '../../shared/widgets/curved_bottom_nav_bar.dart';
 import '../profile/cubit/profile_cubit.dart';
 import '../profile/cubit/profile_state.dart';
@@ -201,8 +204,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           SizedBox(height: 24.h),
 
-          // Profile Navigation Card
           _buildProfileNavigationCardInContent(context, profile),
+          SizedBox(height: 24.h),
+          _buildLanguageCard(),
           SizedBox(height: 24.h),
 
           // if (profile.role == 'user') ...[
@@ -239,6 +243,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           //
           //   SizedBox(height: 24.h),
           // ],
+          _buildLanguageCard(),
+          SizedBox(height: 24.h),
           _buildLogoutCard(),
         ],
       ),
@@ -620,6 +626,110 @@ class _SettingsScreenState extends State<SettingsScreen> {
       default:
         return AppColors.textSecondary;
     }
+  }
+
+  Widget _buildLanguageCard() {
+    final localizations = AppLocalizations.of(context);
+    final currentLocale = Localizations.localeOf(context);
+    final currentLanguage = appLanguageFromLocale(currentLocale);
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+      child: Container(
+        padding: EdgeInsets.all(20.w),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(
+            color: AppColors.primary.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(12.w),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              child: Icon(
+                Icons.language,
+                color: AppColors.primary,
+                size: 24.sp,
+              ),
+            ),
+            SizedBox(width: 16.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    localizations?.language ?? AppTexts.settings,
+                    style: TextStyle(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  SizedBox(height: 4.h),
+                  Text(
+                    localizations?.selectLanguage ?? '',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLanguageOption(
+    BuildContext context,
+    AppLanguage language,
+    String label,
+    bool isSelected,
+  ) {
+    return InkWell(
+      onTap: () {
+        final appState = MyApp.of(context);
+        if (appState != null) {
+          appState.setLocale(language.locale);
+        }
+      },
+      borderRadius: BorderRadius.circular(12.r),
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
+        decoration: BoxDecoration(
+          gradient: isSelected ? AppColors.primaryGradient : null,
+          color: isSelected ? null : AppColors.surfaceVariant,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.primary
+                : AppColors.border.withOpacity(0.3),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
+              color: isSelected
+                  ? AppColors.textOnPrimary
+                  : AppColors.textPrimary,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildLogoutCard() {

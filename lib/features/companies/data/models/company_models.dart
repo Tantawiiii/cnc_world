@@ -33,6 +33,47 @@ class CompanyImage {
   }
 }
 
+class CompanyProduct {
+  final int id;
+  final String name;
+  final String description;
+  final String? imageUrl;
+  final CompanyImage? image;
+  final String createdAt;
+
+  CompanyProduct({
+    required this.id,
+    required this.name,
+    required this.description,
+    this.imageUrl,
+    this.image,
+    required this.createdAt,
+  });
+
+  factory CompanyProduct.fromJson(Map<String, dynamic> json) {
+    return CompanyProduct(
+      id: json['id'] ?? 0,
+      name: json['name'] ?? '',
+      description: json['description'] ?? '',
+      imageUrl: json['imageUrl'],
+      image: json['image'] != null
+          ? CompanyImage.fromJson(json['image'])
+          : null,
+      createdAt: json['createdAt'] ?? '',
+    );
+  }
+
+  String get imageUrlString {
+    if (imageUrl != null && imageUrl!.isNotEmpty) {
+      return imageUrl!;
+    }
+    if (image?.fullUrl != null && image!.fullUrl.isNotEmpty) {
+      return image!.fullUrl;
+    }
+    return '';
+  }
+}
+
 class Company {
   final int id;
   final String role;
@@ -41,7 +82,7 @@ class Company {
   final String phone;
   final String companyAddress;
   final bool active;
-  final List<dynamic> products;
+  final List<CompanyProduct> products;
   final String createdAt;
   final String updatedAt;
   final String? imageUrl;
@@ -63,6 +104,7 @@ class Company {
   });
 
   factory Company.fromJson(Map<String, dynamic> json) {
+    final productsList = json['products'] as List<dynamic>? ?? [];
     return Company(
       id: json['id'] ?? 0,
       role: json['role'] ?? '',
@@ -71,7 +113,9 @@ class Company {
       phone: json['phone'] ?? '',
       companyAddress: json['company_address'] ?? '',
       active: json['active'] ?? false,
-      products: json['products'] as List<dynamic>? ?? [],
+      products: productsList
+          .map((item) => CompanyProduct.fromJson(item as Map<String, dynamic>))
+          .toList(),
       createdAt: json['createdAt'] ?? '',
       updatedAt: json['updatedAt'] ?? '',
       imageUrl: json['imageUrl'],

@@ -7,6 +7,7 @@ import 'dart:math' as math;
 
 import '../../../core/constant/app_colors.dart';
 import '../../../core/constant/app_texts.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/routing/app_routes.dart';
 import '../cubit/used_machine_cubit.dart';
 import '../cubit/used_machine_state.dart';
@@ -44,13 +45,19 @@ class UsedMachinesListScreen extends StatelessWidget {
                         onPressed: () => Navigator.of(context).pop(),
                       ),
                       Expanded(
-                        child: Text(
-                          AppTexts.usedMachines,
-                          style: TextStyle(
-                            fontSize: 18.sp,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textPrimary,
-                          ),
+                        child: Builder(
+                          builder: (context) {
+                            final localizations = AppLocalizations.of(context);
+                            return Text(
+                              localizations?.usedMachines ??
+                                  AppTexts.usedMachines,
+                              style: TextStyle(
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textPrimary,
+                              ),
+                            );
+                          },
                         ),
                       ),
                       IconButton(
@@ -90,14 +97,20 @@ class UsedMachinesListScreen extends StatelessWidget {
                       ),
                       SizedBox(width: 12.w),
                       Expanded(
-                        child: Text(
-                          AppTexts.usedMachinesDisclaimer,
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            color: AppColors.info,
-                            fontWeight: FontWeight.w600,
-                            height: 1.4,
-                          ),
+                        child: Builder(
+                          builder: (context) {
+                            final localizations = AppLocalizations.of(context);
+                            return Text(
+                              localizations?.usedMachinesDisclaimer ??
+                                  AppTexts.usedMachinesDisclaimer,
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                color: AppColors.info,
+                                fontWeight: FontWeight.w600,
+                                height: 1.4,
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ],
@@ -112,14 +125,22 @@ class UsedMachinesListScreen extends StatelessWidget {
                         return _buildShimmerList();
                       } else if (state is UsedMachinesLoaded) {
                         if (state.machines.isEmpty) {
-                          return Center(
-                            child: Text(
-                              AppTexts.noMachinesAvailable,
-                              style: TextStyle(
-                                fontSize: 16.sp,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
+                          return Builder(
+                            builder: (context) {
+                              final localizations = AppLocalizations.of(
+                                context,
+                              );
+                              return Center(
+                                child: Text(
+                                  localizations?.noMachinesAvailable ??
+                                      AppTexts.noMachinesAvailable,
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              );
+                            },
                           );
                         }
                         return RefreshIndicator(
@@ -164,13 +185,22 @@ class UsedMachinesListScreen extends StatelessWidget {
                                 textAlign: TextAlign.center,
                               ),
                               SizedBox(height: 16.h),
-                              ElevatedButton(
-                                onPressed: () {
-                                  context
-                                      .read<UsedMachineCubit>()
-                                      .loadUsedMachines();
+                              Builder(
+                                builder: (context) {
+                                  final localizations = AppLocalizations.of(
+                                    context,
+                                  );
+                                  return ElevatedButton(
+                                    onPressed: () {
+                                      context
+                                          .read<UsedMachineCubit>()
+                                          .loadUsedMachines();
+                                    },
+                                    child: Text(
+                                      localizations?.retry ?? AppTexts.retry,
+                                    ),
+                                  );
                                 },
-                                child: Text(AppTexts.retry),
                               ),
                             ],
                           ),
@@ -244,33 +274,7 @@ class UsedMachinesListScreen extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12.r),
-                  child: CachedNetworkImage(
-                    imageUrl: machine.imageUrlString,
-                    width: 100.w,
-                    height: 100.h,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      width: 100.w,
-                      height: 100.h,
-                      color: AppColors.surfaceVariant,
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ),
-                    errorWidget: (context, url, error) => Container(
-                      width: 100.w,
-                      height: 100.h,
-                      color: AppColors.surfaceVariant,
-                      child: Icon(
-                        Icons.image_not_supported,
-                        color: AppColors.textSecondary,
-                        size: 32.sp,
-                      ),
-                    ),
-                  ),
+                  child: _buildThumbnail(machine),
                 ),
                 SizedBox(width: 12.w),
 
@@ -353,6 +357,158 @@ class UsedMachinesListScreen extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  bool _isVideo(UsedMachine machine) {
+    // Check mimeType first (most reliable)
+    if (machine.image?.mimeType != null && machine.image!.mimeType.isNotEmpty) {
+      final mimeType = machine.image!.mimeType.toLowerCase().trim();
+      if (mimeType.startsWith('video/')) {
+        return true;
+      }
+    }
+
+    // Check file extension as backup
+    final url = machine.imageUrlString.trim();
+    if (url.isEmpty) return false;
+
+    final urlLower = url.toLowerCase();
+    final urlWithoutQuery = urlLower.split('?').first;
+
+    final videoExtensions = [
+      '.mp4',
+      '.mov',
+      '.webm',
+      '.avi',
+      '.mkv',
+      '.flv',
+      '.wmv',
+      '.m4v',
+      '.3gp',
+    ];
+
+    return videoExtensions.any((ext) => urlWithoutQuery.endsWith(ext));
+  }
+
+  String _getThumbnailUrl(UsedMachine machine) {
+    // For videos, prefer previewUrl if available
+    if (_isVideo(machine) && machine.image?.previewUrl != null) {
+      final previewUrl = machine.image!.previewUrl.trim();
+      if (previewUrl.isNotEmpty) {
+        // Check if previewUrl is a full URL
+        if (previewUrl.startsWith('http://') ||
+            previewUrl.startsWith('https://')) {
+          return previewUrl;
+        }
+        // Handle malformed URLs that might contain http:// in the middle
+        // e.g., "/storage/http://procnctech.dentin.cloud/images/file-type-video.svg"
+        final httpIndex = previewUrl.indexOf('http://');
+        if (httpIndex > 0) {
+          return previewUrl.substring(httpIndex);
+        }
+        final httpsIndex = previewUrl.indexOf('https://');
+        if (httpsIndex > 0) {
+          return previewUrl.substring(httpsIndex);
+        }
+        // If it's relative, construct full URL
+        if (previewUrl.startsWith('/')) {
+          return 'http://procnctech.dentin.cloud$previewUrl';
+        }
+        return 'http://procnctech.dentin.cloud/$previewUrl';
+      }
+    }
+    // For images or if no previewUrl, use the regular imageUrl
+    return machine.imageUrlString;
+  }
+
+  Widget _buildThumbnail(UsedMachine machine) {
+    final isVideo = _isVideo(machine);
+    final thumbnailUrl = _getThumbnailUrl(machine);
+
+    if (isVideo && thumbnailUrl.isEmpty) {
+      // If it's a video but no preview URL, show video icon
+      return Container(
+        width: 100.w,
+        height: 100.h,
+        color: AppColors.surfaceVariant,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Icon(
+              Icons.video_library,
+              color: AppColors.textSecondary,
+              size: 40.sp,
+            ),
+            Positioned(
+              bottom: 8.h,
+              right: 8.w,
+              child: Container(
+                padding: EdgeInsets.all(4.w),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.7),
+                  borderRadius: BorderRadius.circular(4.r),
+                ),
+                child: Icon(
+                  Icons.play_circle_filled,
+                  color: Colors.white,
+                  size: 20.sp,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return CachedNetworkImage(
+      imageUrl: thumbnailUrl,
+      width: 100.w,
+      height: 100.h,
+      fit: BoxFit.cover,
+      placeholder: (context, url) => Container(
+        width: 100.w,
+        height: 100.h,
+        color: AppColors.surfaceVariant,
+        child: Center(
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: AppColors.primary,
+          ),
+        ),
+      ),
+      errorWidget: (context, url, error) => Container(
+        width: 100.w,
+        height: 100.h,
+        color: AppColors.surfaceVariant,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Icon(
+              isVideo ? Icons.video_library : Icons.image_not_supported,
+              color: AppColors.textSecondary,
+              size: 32.sp,
+            ),
+            if (isVideo)
+              Positioned(
+                bottom: 8.h,
+                right: 8.w,
+                child: Container(
+                  padding: EdgeInsets.all(4.w),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(4.r),
+                  ),
+                  child: Icon(
+                    Icons.play_circle_filled,
+                    color: Colors.white,
+                    size: 20.sp,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

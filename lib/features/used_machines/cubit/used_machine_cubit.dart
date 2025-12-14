@@ -30,9 +30,19 @@ class UsedMachineCubit extends Cubit<UsedMachineState> {
   }
 
   Future<void> uploadImage(File imageFile) async {
-    emit(ImageUploading());
+    emit(const ImageUploading(progress: 0.0));
     try {
-      final response = await _repository.uploadImage(imageFile);
+      final response = await _repository.uploadImage(
+        imageFile,
+        onSendProgress: (sent, total) {
+          final progress = sent / total;
+          // Only emit progress if less than 0.99 to avoid overriding ImageUploaded
+          if (progress < 0.99) {
+            emit(ImageUploading(progress: progress));
+          }
+        },
+      );
+      // Ensure we emit ImageUploaded after upload completes
       emit(ImageUploaded(response.data.id));
     } catch (e) {
       emit(ImageUploadError(e.toString()));

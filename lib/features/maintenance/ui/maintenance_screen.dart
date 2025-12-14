@@ -25,9 +25,14 @@ class _MaintenanceScreenState extends State<MaintenanceScreen> {
   final _problemDetailsController = TextEditingController();
 
   Engineer? _selectedEngineer;
-  File? _selectedImage;
+  File? _selectedMedia;
+  MediaType? _mediaType;
   int? _imageId;
   bool _isUploadingImage = false;
+  double _uploadProgress = 0.0;
+  List<Engineer> _engineers = [];
+  bool _isLoadingEngineers = true;
+  String? _engineersError;
 
   @override
   void initState() {
@@ -43,10 +48,11 @@ class _MaintenanceScreenState extends State<MaintenanceScreen> {
 
   Future<void> _pickImage() async {
     try {
-      final result = await context.pickAndCropImage();
+      final result = await context.pickMedia();
       if (result != null && mounted) {
         setState(() {
-          _selectedImage = result.file;
+          _selectedMedia = result.file;
+          _mediaType = result.type;
           _isUploadingImage = true;
         });
         context.read<MaintenanceCubit>().uploadImage(result.file);
@@ -55,7 +61,7 @@ class _MaintenanceScreenState extends State<MaintenanceScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error picking image: $e'),
+            content: Text('${AppTexts.errorPickingMedia} $e'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -110,10 +116,26 @@ class _MaintenanceScreenState extends State<MaintenanceScreen> {
           child: SafeArea(
             child: BlocListener<MaintenanceCubit, MaintenanceState>(
               listener: (context, state) {
-                if (state is ImageUploaded) {
+                if (state is EngineersLoaded) {
+                  setState(() {
+                    _engineers = state.engineers;
+                    _isLoadingEngineers = false;
+                  });
+                } else if (state is EngineersError) {
+                  setState(() {
+                    _isLoadingEngineers = false;
+                    _engineersError = state.message;
+                  });
+                } else if (state is ImageUploading) {
+                  setState(() {
+                    _isUploadingImage = true;
+                    _uploadProgress = (state as ImageUploading).progress;
+                  });
+                } else if (state is ImageUploaded) {
                   setState(() {
                     _imageId = state.imageId;
                     _isUploadingImage = false;
+                    _uploadProgress = 1.0;
                   });
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -122,7 +144,10 @@ class _MaintenanceScreenState extends State<MaintenanceScreen> {
                     ),
                   );
                 } else if (state is ImageUploadError) {
-                  setState(() => _isUploadingImage = false);
+                  setState(() {
+                    _isUploadingImage = false;
+                    _uploadProgress = 0.0;
+                  });
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(state.message),
@@ -207,81 +232,7 @@ class _MaintenanceScreenState extends State<MaintenanceScreen> {
                         ),
                       ),
                       SizedBox(height: 12.h),
-                      BlocBuilder<MaintenanceCubit, MaintenanceState>(
-                        builder: (context, state) {
-                          if (state is MaintenanceLoading) {
-                            return Container(
-                              padding: EdgeInsets.all(16.w),
-                              decoration: BoxDecoration(
-                                color: AppColors.surfaceVariant,
-                                borderRadius: BorderRadius.circular(14.r),
-                              ),
-                              child: Row(
-                                children: [
-                                  SizedBox(
-                                    width: 20.w,
-                                    height: 20.h,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: AppColors.primary,
-                                    ),
-                                  ),
-                                  SizedBox(width: 12.w),
-                                  Text(
-                                    AppTexts.loadingEngineers,
-                                    style: TextStyle(
-                                      fontSize: 14.sp,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          } else if (state is EngineersLoaded) {
-                            if (state.engineers.isEmpty) {
-                              return Container(
-                                padding: EdgeInsets.all(16.w),
-                                decoration: BoxDecoration(
-                                  color: AppColors.warning.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(14.r),
-                                  border: Border.all(
-                                    color: AppColors.warning,
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Text(
-                                  AppTexts.noEngineersAvailable,
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
-                                    color: AppColors.warning,
-                                  ),
-                                ),
-                              );
-                            }
-                            return _buildEngineerDropdown(state.engineers);
-                          } else if (state is EngineersError) {
-                            return Container(
-                              padding: EdgeInsets.all(16.w),
-                              decoration: BoxDecoration(
-                                color: AppColors.error.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(14.r),
-                                border: Border.all(
-                                  color: AppColors.error,
-                                  width: 1,
-                                ),
-                              ),
-                              child: Text(
-                                state.message,
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  color: AppColors.error,
-                                ),
-                              ),
-                            );
-                          }
-                          return const SizedBox.shrink();
-                        },
-                      ),
+                      _buildEngineerDropdownWidget(),
                       SizedBox(height: 24.h),
 
                       Text(
@@ -315,6 +266,67 @@ class _MaintenanceScreenState extends State<MaintenanceScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildEngineerDropdownWidget() {
+    if (_isLoadingEngineers) {
+      return Container(
+        padding: EdgeInsets.all(16.w),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceVariant,
+          borderRadius: BorderRadius.circular(14.r),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 20.w,
+              height: 20.h,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.primary,
+              ),
+            ),
+            SizedBox(width: 12.w),
+            Text(
+              AppTexts.loadingEngineers,
+              style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_engineersError != null) {
+      return Container(
+        padding: EdgeInsets.all(16.w),
+        decoration: BoxDecoration(
+          color: AppColors.error.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(14.r),
+          border: Border.all(color: AppColors.error, width: 1),
+        ),
+        child: Text(
+          _engineersError!,
+          style: TextStyle(fontSize: 14.sp, color: AppColors.error),
+        ),
+      );
+    }
+
+    if (_engineers.isEmpty) {
+      return Container(
+        padding: EdgeInsets.all(16.w),
+        decoration: BoxDecoration(
+          color: AppColors.warning.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(14.r),
+          border: Border.all(color: AppColors.warning, width: 1),
+        ),
+        child: Text(
+          AppTexts.noEngineersAvailable,
+          style: TextStyle(fontSize: 14.sp, color: AppColors.warning),
+        ),
+      );
+    }
+
+    return _buildEngineerDropdown(_engineers);
   }
 
   Widget _buildEngineerDropdown(List<Engineer> engineers) {
@@ -407,31 +419,76 @@ class _MaintenanceScreenState extends State<MaintenanceScreen> {
             width: _imageId != null ? 2 : 1.5,
           ),
         ),
-        child: _selectedImage != null
+        child: _selectedMedia != null
             ? Stack(
                 fit: StackFit.expand,
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(16.r),
-                    child: Image.file(_selectedImage!, fit: BoxFit.cover),
+                    child: _mediaType == MediaType.video
+                        ? Container(
+                            color: Colors.black,
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.play_circle_filled,
+                                    size: 64.sp,
+                                    color: Colors.white,
+                                  ),
+                                  SizedBox(height: 12.h),
+                                  Text(
+                                    AppTexts.video,
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16.sp,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        : Image.file(_selectedMedia!, fit: BoxFit.cover),
                   ),
                   if (_isUploadingImage)
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.5),
+                        color: Colors.black.withOpacity(0.7),
                         borderRadius: BorderRadius.circular(16.r),
                       ),
                       child: Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            CircularProgressIndicator(color: AppColors.primary),
-                            SizedBox(height: 12.h),
+                            SizedBox(
+                              width: 60.w,
+                              height: 60.w,
+                              child: CircularProgressIndicator(
+                                value: _uploadProgress > 0
+                                    ? _uploadProgress
+                                    : null,
+                                color: AppColors.primary,
+                                strokeWidth: 4,
+                              ),
+                            ),
+                            SizedBox(height: 16.h),
                             Text(
                               AppTexts.maintenanceUploadingImage,
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 14.sp,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            SizedBox(height: 8.h),
+                            Text(
+                              '${(_uploadProgress * 100).toStringAsFixed(0)}%',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ],

@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'api_constants.dart';
 import '../services/storage_service.dart';
@@ -11,9 +14,9 @@ class DioClient {
     _dio = Dio(
       BaseOptions(
         baseUrl: ApiConstants.baseUrl,
-        connectTimeout: const Duration(seconds: 30),
-        receiveTimeout: const Duration(seconds: 30),
-        sendTimeout: const Duration(seconds: 30),
+        connectTimeout: const Duration(seconds: 60),
+        receiveTimeout: const Duration(minutes: 5), // Increased for video uploads
+        sendTimeout: const Duration(minutes: 5), // Increased for video uploads
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -23,6 +26,16 @@ class DioClient {
         },
       ),
     );
+
+    // Configure HTTP adapter for better compatibility in release builds
+    if (_dio.httpClientAdapter is IOHttpClientAdapter) {
+      (_dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
+        final client = HttpClient();
+        client.badCertificateCallback = (cert, host, port) => false;
+        client.connectionTimeout = const Duration(seconds: 60);
+        return client;
+      };
+    }
 
     _setupInterceptors();
   }

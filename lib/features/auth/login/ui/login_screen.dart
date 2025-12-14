@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/constant/app_colors.dart';
 import '../../../../core/constant/app_texts.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/primary_button.dart';
@@ -82,63 +83,90 @@ class _LoginScreenState extends State<LoginScreen> {
                         SizedBox(height: 60.h),
 
                         // Logo/Title
-                        Text(
-                          AppTexts.appTitle,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 32.sp,
-                            fontWeight: FontWeight.w800,
-                            foreground: Paint()
-                              ..shader = AppColors.brandGradient.createShader(
-                                const Rect.fromLTWH(0.0, 0.0, 200.0, 70.0),
-                              ),
-                          ),
-                        ),
-
-                        SizedBox(height: 8.h),
-                        Text(
-                          AppTexts.login,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 24.sp,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                          ),
+                        Builder(
+                          builder: (context) {
+                            final localizations = AppLocalizations.of(context);
+                            return Column(
+                              children: [
+                                Text(
+                                  localizations?.appTitle ?? AppTexts.appTitle,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 32.sp,
+                                    fontWeight: FontWeight.w800,
+                                    foreground: Paint()
+                                      ..shader = AppColors.brandGradient
+                                          .createShader(
+                                            const Rect.fromLTWH(
+                                              0.0,
+                                              0.0,
+                                              200.0,
+                                              70.0,
+                                            ),
+                                          ),
+                                  ),
+                                ),
+                                SizedBox(height: 8.h),
+                                Text(
+                                  localizations?.login ?? AppTexts.login,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 24.sp,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
                         ),
 
                         SizedBox(height: 60.h),
 
                         // Phone Field
-                        AppTextField(
-                          controller: _phoneController,
-                          hint: AppTexts.phone,
-                          keyboardType: TextInputType.phone,
-                          leadingIcon: Icons.phone_outlined,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                          ],
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return AppTexts.phoneRequired;
-                            }
-                            return null;
+                        Builder(
+                          builder: (context) {
+                            final localizations = AppLocalizations.of(context);
+                            return AppTextField(
+                              controller: _phoneController,
+                              hint: localizations?.phone ?? AppTexts.phone,
+                              keyboardType: TextInputType.phone,
+                              leadingIcon: Icons.phone_outlined,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return localizations?.phoneRequired ??
+                                      AppTexts.phoneRequired;
+                                }
+                                return null;
+                              },
+                            );
                           },
                         ),
 
                         SizedBox(height: 20.h),
 
                         // Password Field
-                        AppTextField(
-                          controller: _passwordController,
-                          hint: AppTexts.password,
-                          obscure: true,
-                          obscurable: true,
-                          leadingIcon: Icons.lock_outline,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return AppTexts.passwordRequired;
-                            }
-                            return null;
+                        Builder(
+                          builder: (context) {
+                            final localizations = AppLocalizations.of(context);
+                            return AppTextField(
+                              controller: _passwordController,
+                              hint:
+                                  localizations?.password ?? AppTexts.password,
+                              obscure: true,
+                              obscurable: true,
+                              leadingIcon: Icons.lock_outline,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return localizations?.passwordRequired ??
+                                      AppTexts.passwordRequired;
+                                }
+                                return null;
+                              },
+                            );
                           },
                         ),
 
@@ -147,8 +175,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         // Login Button
                         BlocBuilder<LoginCubit, LoginState>(
                           builder: (context, state) {
+                            final localizations = AppLocalizations.of(context);
                             return PrimaryButton(
-                              title: AppTexts.loginButton,
+                              title:
+                                  localizations?.loginButton ??
+                                  AppTexts.loginButton,
                               onPressed: state is LoginLoading
                                   ? null
                                   : () => _handleLogin(context),
@@ -160,29 +191,36 @@ class _LoginScreenState extends State<LoginScreen> {
                         SizedBox(height: 24.h),
 
                         // Register Link
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              AppTexts.dontHaveAccount,
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                            SizedBox(width: 8.w),
-                            GestureDetector(
-                              onTap: () => _navigateToRegister(context),
-                              child: Text(
-                                AppTexts.register,
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.primary,
+                        Builder(
+                          builder: (context) {
+                            final localizations = AppLocalizations.of(context);
+                            return Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  localizations?.dontHaveAccount ??
+                                      AppTexts.dontHaveAccount,
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    color: AppColors.textSecondary,
+                                  ),
                                 ),
-                              ),
-                            ),
-                          ],
+                                SizedBox(width: 8.w),
+                                GestureDetector(
+                                  onTap: () => _navigateToRegister(context),
+                                  child: Text(
+                                    localizations?.register ??
+                                        AppTexts.register,
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
                         ),
                       ],
                     ),

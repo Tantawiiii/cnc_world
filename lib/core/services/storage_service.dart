@@ -6,6 +6,7 @@ class StorageService {
   static const String _keyToken = 'auth_token';
   static const String _keyUserData = 'user_data';
   static const String _keyUserType = 'user_type';
+  static const String _keyLanguage = 'app_language';
 
   final SharedPreferences _prefs;
 
@@ -57,10 +58,24 @@ class StorageService {
     await _prefs.remove(_keyUserType);
   }
 
+  // Language methods
+  Future<void> saveLanguage(String languageCode) async {
+    await _prefs.setString(_keyLanguage, languageCode);
+  }
+
+  String? getLanguage() {
+    return _prefs.getString(_keyLanguage);
+  }
+
+  Future<void> removeLanguage() async {
+    await _prefs.remove(_keyLanguage);
+  }
+
   // Clear all auth data
   Future<void> clearAll() async {
     await removeToken();
     await removeUserData();
     await removeUserType();
+    // Note: We don't clear language preference on logout
   }
 }

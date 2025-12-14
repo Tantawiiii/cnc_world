@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,8 +8,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/constant/app_colors.dart';
 import '../../../../core/constant/app_texts.dart';
 import '../../../../core/extensions/image_picker_extension.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../shared/widgets/app_text_field.dart';
+import '../../../../shared/widgets/app_dropdown.dart';
 import '../../../../shared/widgets/primary_button.dart';
 import '../cubit/register_cubit.dart';
 import '../data/models/register_models.dart';
@@ -29,12 +32,21 @@ class _RegisterScreenState extends State<RegisterScreen>
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _addressController = TextEditingController();
-  final _cityController = TextEditingController();
-  final _stateController = TextEditingController();
   final _workshopNameController = TextEditingController();
   final _natureOfWorkController = TextEditingController();
   final _facebookLinkController = TextEditingController();
   final _whatsappNumberController = TextEditingController();
+
+  String? _selectedCountry;
+  String? _selectedCountryName;
+  String? _selectedState;
+  String? _selectedStateName;
+  String? _selectedCity;
+
+  List<Map<String, dynamic>> _countries = [];
+  List<Map<String, dynamic>> _states = [];
+  List<Map<String, dynamic>> _cities = [];
+  bool _isLoadingCountries = true;
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -43,6 +55,7 @@ class _RegisterScreenState extends State<RegisterScreen>
   File? _selectedImage;
   int? _imageId;
   bool _isUploadingImage = false;
+  bool _isPickingImage = false;
 
   UserRole get selectedRole => widget.role ?? UserRole.user;
 
@@ -67,6 +80,124 @@ class _RegisterScreenState extends State<RegisterScreen>
         );
 
     _animationController.forward();
+    _loadCountries();
+  }
+
+  Future<void> _loadCountries() async {
+    try {
+      final String jsonString = await rootBundle.loadString(
+        'packages/country_state_city_picker/lib/assets/country.json',
+      );
+      final List<dynamic> jsonData = json.decode(jsonString);
+      setState(() {
+        _countries = jsonData.map((e) => e as Map<String, dynamic>).toList();
+        _isLoadingCountries = false;
+      });
+
+      const egyptId = '65';
+      try {
+        final egypt = _countries.firstWhere(
+          (c) => c['id'].toString() == egyptId,
+        );
+        setState(() {
+          _selectedCountry = egyptId;
+          _selectedCountryName = egypt['name'] as String?;
+        });
+        await _loadStates(egyptId);
+      } catch (e) {}
+    } catch (e) {
+      setState(() {
+        _isLoadingCountries = false;
+      });
+    }
+  }
+
+  Future<void> _loadStates(String countryId) async {
+    try {
+      final String jsonString = await rootBundle.loadString(
+        'packages/country_state_city_picker/lib/assets/country.json',
+      );
+      final List<dynamic> jsonData = json.decode(jsonString);
+      try {
+        final country =
+            jsonData.firstWhere((c) => c['id'].toString() == countryId)
+                as Map<String, dynamic>;
+        if (country['state'] != null) {
+          setState(() {
+            _states = (country['state'] as List<dynamic>)
+                .map((e) => e as Map<String, dynamic>)
+                .toList();
+            _cities = [];
+            _selectedState = null;
+            _selectedStateName = null;
+            _selectedCity = null;
+          });
+        } else {
+          setState(() {
+            _states = [];
+          });
+        }
+      } catch (e) {
+        setState(() {
+          _states = [];
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _states = [];
+      });
+    }
+  }
+
+  Future<void> _loadCities(String countryId, String stateId) async {
+    try {
+      final String jsonString = await rootBundle.loadString(
+        'packages/country_state_city_picker/lib/assets/country.json',
+      );
+      final List<dynamic> jsonData = json.decode(jsonString);
+      try {
+        final country =
+            jsonData.firstWhere((c) => c['id'].toString() == countryId)
+                as Map<String, dynamic>;
+        if (country['state'] != null) {
+          try {
+            final state =
+                (country['state'] as List<dynamic>).firstWhere(
+                      (s) => s['id'].toString() == stateId,
+                    )
+                    as Map<String, dynamic>;
+            if (state['city'] != null) {
+              setState(() {
+                _cities = (state['city'] as List<dynamic>)
+                    .map((e) => e as Map<String, dynamic>)
+                    .toList();
+                _selectedCity = null;
+              });
+            } else {
+              setState(() {
+                _cities = [];
+              });
+            }
+          } catch (e) {
+            setState(() {
+              _cities = [];
+            });
+          }
+        } else {
+          setState(() {
+            _cities = [];
+          });
+        }
+      } catch (e) {
+        setState(() {
+          _cities = [];
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _cities = [];
+      });
+    }
   }
 
   @override
@@ -76,8 +207,6 @@ class _RegisterScreenState extends State<RegisterScreen>
     _phoneController.dispose();
     _passwordController.dispose();
     _addressController.dispose();
-    _cityController.dispose();
-    _stateController.dispose();
     _workshopNameController.dispose();
     _natureOfWorkController.dispose();
     _facebookLinkController.dispose();
@@ -86,8 +215,19 @@ class _RegisterScreenState extends State<RegisterScreen>
   }
 
   Future<void> _pickImage(BuildContext context) async {
+    // Prevent multiple simultaneous image picks
+    if (_isPickingImage || _isUploadingImage) {
+      return;
+    }
+
     try {
+      setState(() => _isPickingImage = true);
+
       final result = await context.pickAndCropImage();
+
+      if (!mounted) return;
+
+      setState(() => _isPickingImage = false);
 
       if (result != null && mounted) {
         setState(() => _isUploadingImage = true);
@@ -98,16 +238,22 @@ class _RegisterScreenState extends State<RegisterScreen>
           final cubit = context.read<RegisterCubit>();
           final uploadedImageId = await cubit.uploadImage(file);
 
-          if (uploadedImageId != null && mounted) {
+          if (!mounted) return;
+
+          if (uploadedImageId != null) {
             setState(() {
               _imageId = uploadedImageId;
               _isUploadingImage = false;
             });
-          } else if (mounted) {
+          } else {
             setState(() => _isUploadingImage = false);
+            final localizations = AppLocalizations.of(context);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(AppTexts.imageUploadFailed),
+                content: Text(
+                  localizations?.imageUploadFailed ??
+                      AppTexts.imageUploadFailed,
+                ),
                 backgroundColor: AppColors.error,
               ),
             );
@@ -116,7 +262,10 @@ class _RegisterScreenState extends State<RegisterScreen>
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _isUploadingImage = false);
+        setState(() {
+          _isPickingImage = false;
+          _isUploadingImage = false;
+        });
       }
     }
   }
@@ -124,14 +273,21 @@ class _RegisterScreenState extends State<RegisterScreen>
   void _handleRegister(BuildContext context) {
     if (_formKey.currentState!.validate()) {
       if (_needsImage() && _imageId == null) {
+        final localizations = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppTexts.imageRequired),
+            content: Text(
+              localizations?.imageRequired ?? AppTexts.imageRequired,
+            ),
             backgroundColor: AppColors.error,
           ),
         );
         return;
       }
+
+      // Use stored country and state names
+      final countryName = _selectedCountryName;
+      final stateName = _selectedStateName;
 
       final request = RegisterRequest(
         role: selectedRole,
@@ -139,8 +295,9 @@ class _RegisterScreenState extends State<RegisterScreen>
         phone: _phoneController.text.trim(),
         password: _passwordController.text,
         address: _needsAddress() ? _addressController.text.trim() : null,
-        city: _needsAddress() ? _cityController.text.trim() : null,
-        state: _needsAddress() ? _stateController.text.trim() : null,
+        country: countryName,
+        city: _needsAddress() ? _selectedCity : null,
+        state: stateName,
         workshopName: _needsWorkshopName()
             ? _workshopNameController.text.trim()
             : null,
@@ -187,10 +344,13 @@ class _RegisterScreenState extends State<RegisterScreen>
               child: BlocListener<RegisterCubit, RegisterState>(
                 listener: (context, state) {
                   if (state is RegisterSuccess) {
-
+                    final localizations = AppLocalizations.of(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text(AppTexts.registerSuccess),
+                        content: Text(
+                          localizations?.registerSuccess ??
+                              AppTexts.registerSuccess,
+                        ),
                         backgroundColor: AppColors.success,
                         behavior: SnackBarBehavior.floating,
                         duration: const Duration(seconds: 2),
@@ -229,44 +389,58 @@ class _RegisterScreenState extends State<RegisterScreen>
                                 onPressed: () => Navigator.of(context).pop(),
                               ),
                             ),
-                            Text(
-                              AppTexts.registerTitle,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 28.sp,
-                                fontWeight: FontWeight.w800,
-                                foreground: Paint()
-                                  ..shader = AppColors.brandGradient
-                                      .createShader(
-                                        const Rect.fromLTWH(
-                                          0.0,
-                                          0.0,
-                                          200.0,
-                                          70.0,
+                            Builder(
+                              builder: (context) {
+                                final localizations = AppLocalizations.of(
+                                  context,
+                                );
+                                return Column(
+                                  children: [
+                                    Text(
+                                      localizations?.registerTitle ??
+                                          AppTexts.registerTitle,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 28.sp,
+                                        fontWeight: FontWeight.w800,
+                                        foreground: Paint()
+                                          ..shader = AppColors.brandGradient
+                                              .createShader(
+                                                const Rect.fromLTWH(
+                                                  0.0,
+                                                  0.0,
+                                                  200.0,
+                                                  70.0,
+                                                ),
+                                              ),
+                                      ),
+                                    ),
+                                    SizedBox(height: 8.h),
+                                    Center(
+                                      child: Container(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 20.w,
+                                          vertical: 8.h,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          gradient: AppColors.secondaryGradient,
+                                          borderRadius: BorderRadius.circular(
+                                            20.r,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          _getRoleTitle(selectedRole, context),
+                                          style: TextStyle(
+                                            fontSize: 14.sp,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.textOnPrimary,
+                                          ),
                                         ),
                                       ),
-                              ),
-                            ),
-                            SizedBox(height: 8.h),
-                            Center(
-                              child: Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 20.w,
-                                  vertical: 8.h,
-                                ),
-                                decoration: BoxDecoration(
-                                  gradient: AppColors.secondaryGradient,
-                                  borderRadius: BorderRadius.circular(20.r),
-                                ),
-                                child: Text(
-                                  _getRoleTitle(selectedRole),
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.textOnPrimary,
-                                  ),
-                                ),
-                              ),
+                                    ),
+                                  ],
+                                );
+                              },
                             ),
                             SizedBox(height: 40.h),
 
@@ -285,7 +459,8 @@ class _RegisterScreenState extends State<RegisterScreen>
                                 },
                                 child: Builder(
                                   builder: (builderContext) => GestureDetector(
-                                    onTap: _isUploadingImage
+                                    onTap:
+                                        (_isUploadingImage || _isPickingImage)
                                         ? null
                                         : () => _pickImage(builderContext),
                                     child: AnimatedContainer(
@@ -334,7 +509,8 @@ class _RegisterScreenState extends State<RegisterScreen>
                                               ]
                                             : null,
                                       ),
-                                      child: _isUploadingImage
+                                      child:
+                                          (_isUploadingImage || _isPickingImage)
                                           ? Center(
                                               child: Column(
                                                 mainAxisAlignment:
@@ -344,13 +520,29 @@ class _RegisterScreenState extends State<RegisterScreen>
                                                     color: AppColors.primary,
                                                   ),
                                                   SizedBox(height: 12.h),
-                                                  Text(
-                                                    AppTexts.uploadingImage,
-                                                    style: TextStyle(
-                                                      fontSize: 12.sp,
-                                                      color: AppColors
-                                                          .textSecondary,
-                                                    ),
+                                                  Builder(
+                                                    builder: (context) {
+                                                      final localizations =
+                                                          AppLocalizations.of(
+                                                            context,
+                                                          );
+                                                      return Text(
+                                                        _isPickingImage
+                                                            ? localizations
+                                                                      ?.pickingImage ??
+                                                                  AppTexts
+                                                                      .pickingImage
+                                                            : localizations
+                                                                      ?.uploadingImage ??
+                                                                  AppTexts
+                                                                      .uploadingImage,
+                                                        style: TextStyle(
+                                                          fontSize: 12.sp,
+                                                          color: AppColors
+                                                              .textSecondary,
+                                                        ),
+                                                      );
+                                                    },
                                                   ),
                                                 ],
                                               ),
@@ -438,22 +630,42 @@ class _RegisterScreenState extends State<RegisterScreen>
                                                   ),
                                                 ),
                                                 SizedBox(height: 16.h),
-                                                Text(
-                                                  AppTexts.uploadImage,
-                                                  style: TextStyle(
-                                                    fontSize: 15.sp,
-                                                    fontWeight: FontWeight.w700,
-                                                    color: AppColors.primary,
-                                                  ),
-                                                ),
-                                                SizedBox(height: 4.h),
-                                                Text(
-                                                  AppTexts.tapToSelect,
-                                                  style: TextStyle(
-                                                    fontSize: 12.sp,
-                                                    color:
-                                                        AppColors.textSecondary,
-                                                  ),
+                                                Builder(
+                                                  builder: (context) {
+                                                    final localizations =
+                                                        AppLocalizations.of(
+                                                          context,
+                                                        );
+                                                    return Column(
+                                                      children: [
+                                                        Text(
+                                                          localizations
+                                                                  ?.uploadImage ??
+                                                              AppTexts
+                                                                  .uploadImage,
+                                                          style: TextStyle(
+                                                            fontSize: 15.sp,
+                                                            fontWeight:
+                                                                FontWeight.w700,
+                                                            color: AppColors
+                                                                .primary,
+                                                          ),
+                                                        ),
+                                                        SizedBox(height: 4.h),
+                                                        Text(
+                                                          localizations
+                                                                  ?.tapToSelect ??
+                                                              AppTexts
+                                                                  .tapToSelect,
+                                                          style: TextStyle(
+                                                            fontSize: 12.sp,
+                                                            color: AppColors
+                                                                .textSecondary,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    );
+                                                  },
                                                 ),
                                               ],
                                             ),
@@ -464,153 +676,383 @@ class _RegisterScreenState extends State<RegisterScreen>
                               SizedBox(height: 24.h),
                             ],
 
-                            AppTextField(
-                              controller: _nameController,
-                              hint: AppTexts.name,
-                              leadingIcon: Icons.person_outline,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return AppTexts.nameRequired;
-                                }
-                                return null;
-                              },
-                            ),
-
-                            SizedBox(height: 12.h),
-
-                            AppTextField(
-                              controller: _phoneController,
-                              hint: AppTexts.phone,
-                              keyboardType: TextInputType.phone,
-                              leadingIcon: Icons.phone_outlined,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
-                              ],
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return AppTexts.phoneRequired;
-                                }
-                                return null;
-                              },
-                            ),
-
-                            SizedBox(height: 12.h),
-
-                            AppTextField(
-                              controller: _passwordController,
-                              hint: AppTexts.password,
-                              obscure: true,
-                              obscurable: true,
-                              leadingIcon: Icons.lock_outline,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return AppTexts.passwordRequired;
-                                }
-                                return null;
+                            Builder(
+                              builder: (context) {
+                                final localizations = AppLocalizations.of(
+                                  context,
+                                );
+                                return Column(
+                                  children: [
+                                    AppTextField(
+                                      controller: _nameController,
+                                      hint:
+                                          localizations?.name ?? AppTexts.name,
+                                      leadingIcon: Icons.person_outline,
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return localizations?.nameRequired ??
+                                              AppTexts.nameRequired;
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                    SizedBox(height: 12.h),
+                                    AppTextField(
+                                      controller: _phoneController,
+                                      hint:
+                                          localizations?.phone ??
+                                          AppTexts.phone,
+                                      keyboardType: TextInputType.phone,
+                                      leadingIcon: Icons.phone_outlined,
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.digitsOnly,
+                                      ],
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return localizations?.phoneRequired ??
+                                              AppTexts.phoneRequired;
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                    SizedBox(height: 12.h),
+                                    AppTextField(
+                                      controller: _passwordController,
+                                      hint:
+                                          localizations?.password ??
+                                          AppTexts.password,
+                                      obscure: true,
+                                      obscurable: true,
+                                      leadingIcon: Icons.lock_outline,
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return localizations
+                                                  ?.passwordRequired ??
+                                              AppTexts.passwordRequired;
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                  ],
+                                );
                               },
                             ),
 
                             if (_needsAddress()) ...[
                               SizedBox(height: 12.h),
-                              AppTextField(
-                                controller: _addressController,
-                                hint: AppTexts.address,
-                                leadingIcon: Icons.location_on_outlined,
-                                validator: _needsAddress()
-                                    ? (value) {
-                                        if (value == null || value.isEmpty) {
-                                          return AppTexts.addressRequired;
-                                        }
-                                        return null;
-                                      }
-                                    : null,
+                              Builder(
+                                builder: (context) {
+                                  final localizations = AppLocalizations.of(
+                                    context,
+                                  );
+                                  return AppTextField(
+                                    controller: _addressController,
+                                    hint:
+                                        localizations?.address ??
+                                        AppTexts.address,
+                                    leadingIcon: Icons.location_on_outlined,
+                                    validator: _needsAddress()
+                                        ? (value) {
+                                            if (value == null ||
+                                                value.isEmpty) {
+                                              return localizations
+                                                      ?.addressRequired ??
+                                                  AppTexts.addressRequired;
+                                            }
+                                            return null;
+                                          }
+                                        : null,
+                                  );
+                                },
                               ),
                               SizedBox(height: 12.h),
-                              AppTextField(
-                                controller: _cityController,
-                                hint: AppTexts.city,
-                                leadingIcon: Icons.apartment_outlined,
-                                validator: _needsAddress()
-                                    ? (value) {
-                                        if (value == null || value.isEmpty) {
-                                          return AppTexts.cityRequired;
-                                        }
-                                        return null;
-                                      }
-                                    : null,
-                              ),
-                              SizedBox(height: 12.h),
-                              AppTextField(
-                                controller: _stateController,
-                                hint: AppTexts.state,
-                                leadingIcon: Icons.map_outlined,
-                                validator: _needsAddress()
-                                    ? (value) {
-                                        if (value == null || value.isEmpty) {
-                                          return AppTexts.stateRequired;
-                                        }
-                                        return null;
-                                      }
-                                    : null,
-                              ),
+                              if (_isLoadingCountries)
+                                Container(
+                                  height: 56.h,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.surfaceVariant,
+                                    borderRadius: BorderRadius.circular(14.r),
+                                    border: Border.all(
+                                      color: AppColors.border,
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: SizedBox(
+                                      height: 20.h,
+                                      width: 20.w,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              else ...[
+                                Builder(
+                                  builder: (context) {
+                                    final localizations = AppLocalizations.of(
+                                      context,
+                                    );
+                                    return Column(
+                                      children: [
+                                        AppDropdown<String>(
+                                          hint:
+                                              localizations?.country ??
+                                              AppTexts.country,
+                                          value: _selectedCountry,
+                                          leadingIcon: Icons.public_outlined,
+                                          items: _countries.map((country) {
+                                            return DropdownMenuItem<String>(
+                                              value: country['id'].toString(),
+                                              child: Text(
+                                                country['name'] as String? ??
+                                                    '',
+                                              ),
+                                            );
+                                          }).toList(),
+                                          onChanged: (value) {
+                                            setState(() {
+                                              _selectedCountry = value;
+                                              if (value != null) {
+                                                final country = _countries
+                                                    .firstWhere(
+                                                      (c) =>
+                                                          c['id'].toString() ==
+                                                          value,
+                                                      orElse: () =>
+                                                          _countries.isNotEmpty
+                                                          ? _countries.first
+                                                          : {},
+                                                    );
+                                                _selectedCountryName =
+                                                    country['name'] as String?;
+                                              }
+                                              _selectedState = null;
+                                              _selectedStateName = null;
+                                              _selectedCity = null;
+                                            });
+                                            if (value != null) {
+                                              _loadStates(value);
+                                            }
+                                          },
+                                          validator: _needsAddress()
+                                              ? (value) {
+                                                  if (value == null ||
+                                                      value.isEmpty) {
+                                                    return localizations
+                                                            ?.countryRequired ??
+                                                        AppTexts
+                                                            .countryRequired;
+                                                  }
+                                                  return null;
+                                                }
+                                              : null,
+                                        ),
+                                        if (_selectedCountry != null &&
+                                            _states.isNotEmpty) ...[
+                                          SizedBox(height: 12.h),
+                                          AppDropdown<String>(
+                                            hint:
+                                                localizations?.state ??
+                                                AppTexts.state,
+                                            value: _selectedState,
+                                            leadingIcon: Icons.map_outlined,
+                                            items: _states.map((state) {
+                                              return DropdownMenuItem<String>(
+                                                value: state['id'].toString(),
+                                                child: Text(
+                                                  state['name'] as String? ??
+                                                      '',
+                                                ),
+                                              );
+                                            }).toList(),
+                                            onChanged: (value) {
+                                              setState(() {
+                                                _selectedState = value;
+                                                if (value != null) {
+                                                  final state = _states
+                                                      .firstWhere(
+                                                        (s) =>
+                                                            s['id']
+                                                                .toString() ==
+                                                            value,
+                                                        orElse: () =>
+                                                            _states.isNotEmpty
+                                                            ? _states.first
+                                                            : {},
+                                                      );
+                                                  _selectedStateName =
+                                                      state['name'] as String?;
+                                                }
+                                                _selectedCity = null;
+                                              });
+                                              if (value != null &&
+                                                  _selectedCountry != null) {
+                                                _loadCities(
+                                                  _selectedCountry!,
+                                                  value,
+                                                );
+                                              }
+                                            },
+                                            validator: _needsAddress()
+                                                ? (value) {
+                                                    if (value == null ||
+                                                        value.isEmpty) {
+                                                      return localizations
+                                                              ?.stateRequired ??
+                                                          AppTexts
+                                                              .stateRequired;
+                                                    }
+                                                    return null;
+                                                  }
+                                                : null,
+                                            enabled: _selectedCountry != null,
+                                          ),
+                                        ],
+                                        if (_selectedState != null &&
+                                            _cities.isNotEmpty) ...[
+                                          SizedBox(height: 12.h),
+                                          AppDropdown<String>(
+                                            hint:
+                                                localizations?.city ??
+                                                AppTexts.city,
+                                            value: _selectedCity,
+                                            leadingIcon:
+                                                Icons.apartment_outlined,
+                                            items: _cities.map((city) {
+                                              return DropdownMenuItem<String>(
+                                                value: city['name'] as String?,
+                                                child: Text(
+                                                  city['name'] as String? ?? '',
+                                                ),
+                                              );
+                                            }).toList(),
+                                            onChanged: (value) {
+                                              setState(() {
+                                                _selectedCity = value;
+                                              });
+                                            },
+                                            validator: _needsAddress()
+                                                ? (value) {
+                                                    if (value == null ||
+                                                        value.isEmpty) {
+                                                      return localizations
+                                                              ?.cityRequired ??
+                                                          AppTexts.cityRequired;
+                                                    }
+                                                    return null;
+                                                  }
+                                                : null,
+                                            enabled: _selectedState != null,
+                                          ),
+                                        ],
+                                      ],
+                                    );
+                                  },
+                                ),
+                              ],
                             ],
 
                             if (_needsWorkshopName()) ...[
                               SizedBox(height: 12.h),
-                              AppTextField(
-                                controller: _workshopNameController,
-                                hint: AppTexts.workshopName,
-                                leadingIcon: Icons.store_outlined,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return AppTexts.workshopNameRequired;
-                                  }
-                                  return null;
+                              Builder(
+                                builder: (context) {
+                                  final localizations = AppLocalizations.of(
+                                    context,
+                                  );
+                                  return AppTextField(
+                                    controller: _workshopNameController,
+                                    hint:
+                                        localizations?.workshopName ??
+                                        AppTexts.workshopName,
+                                    leadingIcon: Icons.store_outlined,
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return localizations
+                                                ?.workshopNameRequired ??
+                                            AppTexts.workshopNameRequired;
+                                      }
+                                      return null;
+                                    },
+                                  );
                                 },
                               ),
                             ],
 
                             if (_needsNatureOfWork()) ...[
                               SizedBox(height: 12.h),
-                              AppTextField(
-                                controller: _natureOfWorkController,
-                                hint: AppTexts.natureOfWork,
-                                leadingIcon: Icons.work_outline,
-                                maxLines: 3,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return AppTexts.natureOfWorkRequired;
-                                  }
-                                  return null;
+                              Builder(
+                                builder: (context) {
+                                  final localizations = AppLocalizations.of(
+                                    context,
+                                  );
+                                  return AppTextField(
+                                    controller: _natureOfWorkController,
+                                    hint:
+                                        localizations?.natureOfWork ??
+                                        AppTexts.natureOfWork,
+                                    leadingIcon: Icons.work_outline,
+                                    maxLines: 3,
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return localizations
+                                                ?.natureOfWorkRequired ??
+                                            AppTexts.natureOfWorkRequired;
+                                      }
+                                      return null;
+                                    },
+                                  );
                                 },
                               ),
                             ],
 
                             if (_needsSocialLinks()) ...[
                               SizedBox(height: 12.h),
-                              AppTextField(
-                                controller: _facebookLinkController,
-                                hint: AppTexts.facebookLink,
-                                leadingIcon: Icons.facebook_outlined,
-                                keyboardType: TextInputType.url,
-                              ),
-                              SizedBox(height: 12.h),
-                              AppTextField(
-                                controller: _whatsappNumberController,
-                                hint: AppTexts.whatsappNumber,
-                                keyboardType: TextInputType.phone,
-                                leadingIcon: Icons.chat_bubble_outline,
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.digitsOnly,
-                                ],
+                              Builder(
+                                builder: (context) {
+                                  final localizations = AppLocalizations.of(
+                                    context,
+                                  );
+                                  return Column(
+                                    children: [
+                                      AppTextField(
+                                        controller: _facebookLinkController,
+                                        hint:
+                                            localizations?.facebookLink ??
+                                            AppTexts.facebookLink,
+                                        leadingIcon: Icons.facebook_outlined,
+                                        keyboardType: TextInputType.url,
+                                      ),
+                                      SizedBox(height: 12.h),
+                                      AppTextField(
+                                        controller: _whatsappNumberController,
+                                        hint:
+                                            localizations?.whatsappNumber ??
+                                            AppTexts.whatsappNumber,
+                                        keyboardType: TextInputType.phone,
+                                        leadingIcon: Icons.chat_bubble_outline,
+                                        inputFormatters: [
+                                          FilteringTextInputFormatter
+                                              .digitsOnly,
+                                        ],
+                                      ),
+                                    ],
+                                  );
+                                },
                               ),
                             ],
 
                             SizedBox(height: 40.h),
                             BlocBuilder<RegisterCubit, RegisterState>(
                               builder: (context, state) {
+                                final localizations = AppLocalizations.of(
+                                  context,
+                                );
                                 return PrimaryButton(
-                                  title: AppTexts.registerButton,
+                                  title:
+                                      localizations?.registerButton ??
+                                      AppTexts.registerButton,
                                   onPressed:
                                       state is RegisterLoading ||
                                           state is RegisterImageUploading
@@ -623,31 +1065,40 @@ class _RegisterScreenState extends State<RegisterScreen>
 
                             SizedBox(height: 24.h),
 
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  AppTexts.alreadyHaveAccount,
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                                SizedBox(width: 8.w),
-                                GestureDetector(
-                                  onTap: () => Navigator.of(
-                                    context,
-                                  ).pushReplacementNamed(AppRoutes.login),
-                                  child: Text(
-                                    AppTexts.backToLogin,
-                                    style: TextStyle(
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.primary,
+                            Builder(
+                              builder: (context) {
+                                final localizations = AppLocalizations.of(
+                                  context,
+                                );
+                                return Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      localizations?.alreadyHaveAccount ??
+                                          AppTexts.alreadyHaveAccount,
+                                      style: TextStyle(
+                                        fontSize: 14.sp,
+                                        color: AppColors.textSecondary,
+                                      ),
                                     ),
-                                  ),
-                                ),
-                              ],
+                                    SizedBox(width: 8.w),
+                                    GestureDetector(
+                                      onTap: () => Navigator.of(
+                                        context,
+                                      ).pushReplacementNamed(AppRoutes.login),
+                                      child: Text(
+                                        localizations?.backToLogin ??
+                                            AppTexts.backToLogin,
+                                        style: TextStyle(
+                                          fontSize: 14.sp,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.primary,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
                             ),
 
                             SizedBox(height: 24.h),
@@ -665,16 +1116,17 @@ class _RegisterScreenState extends State<RegisterScreen>
     );
   }
 
-  String _getRoleTitle(UserRole role) {
+  String _getRoleTitle(UserRole role, BuildContext context) {
+    final localizations = AppLocalizations.of(context);
     switch (role) {
       case UserRole.user:
-        return AppTexts.roleUser;
+        return localizations?.roleUser ?? AppTexts.roleUser;
       case UserRole.engineer:
-        return AppTexts.roleEngineer;
+        return localizations?.roleEngineer ?? AppTexts.roleEngineer;
       case UserRole.seller:
-        return AppTexts.roleSeller;
+        return localizations?.roleSeller ?? AppTexts.roleSeller;
       case UserRole.merchant:
-        return AppTexts.roleMerchant;
+        return localizations?.roleMerchant ?? AppTexts.roleMerchant;
     }
   }
 }

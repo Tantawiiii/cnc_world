@@ -50,7 +50,14 @@ class UsedMachineDetailError extends UsedMachineState {
   List<Object?> get props => [message];
 }
 
-class ImageUploading extends UsedMachineState {}
+class ImageUploading extends UsedMachineState {
+  final double progress;
+
+  const ImageUploading({this.progress = 0.0});
+
+  @override
+  List<Object?> get props => [progress];
+}
 
 class ImageUploaded extends UsedMachineState {
   final int imageId;

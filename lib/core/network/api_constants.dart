@@ -6,4 +6,5 @@ final class ApiConstants {
   static const String register = '/api/application-form';
   static const String mediaUpload = '/api/media';
   static const String getSlider = '/api/get-slider';
+  static const String contactUs = '/api/contact-us-public';
 }

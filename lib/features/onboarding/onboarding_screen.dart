@@ -5,7 +5,10 @@ import 'package:lottie/lottie.dart';
 
 import '../../core/constant/app_colors.dart';
 import '../../core/constant/app_texts.dart';
+import '../../core/localization/app_language.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/routing/app_routes.dart';
+import '../../main.dart';
 import '../../shared/widgets/primary_button.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -25,26 +28,41 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
 
-  final List<OnboardingPageData> _pages = [
-    OnboardingPageData(
-      title: AppTexts.onboardingPage1Title,
-      description: AppTexts.onboardingPage1Description,
-      lottieAsset: 'assets/lottie/cnc_machine.json',
-      gradient: AppColors.primaryGradient,
-    ),
-    OnboardingPageData(
-      title: AppTexts.onboardingPage2Title,
-      description: AppTexts.onboardingPage2Description,
-      lottieAsset: 'assets/lottie/services.json',
-      gradient: AppColors.secondaryGradient,
-    ),
-    OnboardingPageData(
-      title: AppTexts.onboardingPage3Title,
-      description: AppTexts.onboardingPage3Description,
-      lottieAsset: 'assets/lottie/start_journey.json',
-      gradient: AppColors.brandGradient,
-    ),
-  ];
+  List<OnboardingPageData> _getPages(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+    return [
+      OnboardingPageData(
+        title:
+            localizations?.onboardingPage1Title ??
+            AppTexts.onboardingPage1Title,
+        description:
+            localizations?.onboardingPage1Description ??
+            AppTexts.onboardingPage1Description,
+        lottieAsset: 'assets/lottie/cnc_machine.json',
+        gradient: AppColors.primaryGradient,
+      ),
+      OnboardingPageData(
+        title:
+            localizations?.onboardingPage2Title ??
+            AppTexts.onboardingPage2Title,
+        description:
+            localizations?.onboardingPage2Description ??
+            AppTexts.onboardingPage2Description,
+        lottieAsset: 'assets/lottie/services.json',
+        gradient: AppColors.secondaryGradient,
+      ),
+      OnboardingPageData(
+        title:
+            localizations?.onboardingPage3Title ??
+            AppTexts.onboardingPage3Title,
+        description:
+            localizations?.onboardingPage3Description ??
+            AppTexts.onboardingPage3Description,
+        lottieAsset: 'assets/lottie/start_journey.json',
+        gradient: AppColors.brandGradient,
+      ),
+    ];
+  }
 
   @override
   void initState() {
@@ -91,7 +109,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   }
 
   void _nextPage() {
-    if (_currentPage < _pages.length - 1) {
+    final pages = _getPages(context);
+    if (_currentPage < pages.length - 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeOut,
@@ -126,52 +145,65 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                     horizontal: 16.w,
                     vertical: 8.h,
                   ),
-                  child: Align(
-                    alignment: Alignment.topLeft,
-                    child: Bounce(
-                      onTap: _navigateToLogin,
-                      duration: const Duration(milliseconds: 80),
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 16.w,
-                          vertical: 8.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.surface.withOpacity(0.8),
-                          borderRadius: BorderRadius.circular(20.r),
-                          border: Border.all(
-                            color: AppColors.border.withOpacity(0.3),
-                            width: 1,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildLanguageSwitcher(),
+                      Bounce(
+                        onTap: _navigateToLogin,
+                        duration: const Duration(milliseconds: 80),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 16.w,
+                            vertical: 8.h,
                           ),
-                        ),
-                        child: Text(
-                          AppTexts.skip,
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
+                          decoration: BoxDecoration(
+                            color: AppColors.surface.withOpacity(0.8),
+                            borderRadius: BorderRadius.circular(20.r),
+                            border: Border.all(
+                              color: AppColors.border.withOpacity(0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Text(
+                            AppLocalizations.of(context)?.skip ?? AppTexts.skip,
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
 
                 Expanded(
-                  child: PageView.builder(
-                    controller: _pageController,
-                    onPageChanged: _onPageChanged,
-                    itemCount: _pages.length,
-                    physics: const ClampingScrollPhysics(),
-                    itemBuilder: (context, index) {
-                      return RepaintBoundary(
-                        child: _buildPage(_pages[index], index),
+                  child: Builder(
+                    builder: (context) {
+                      final pages = _getPages(context);
+                      return PageView.builder(
+                        controller: _pageController,
+                        onPageChanged: _onPageChanged,
+                        itemCount: pages.length,
+                        physics: const ClampingScrollPhysics(),
+                        itemBuilder: (context, index) {
+                          return RepaintBoundary(
+                            child: _buildPage(pages[index], index),
+                          );
+                        },
                       );
                     },
                   ),
                 ),
 
-                _buildPageIndicators(),
+                Builder(
+                  builder: (context) {
+                    final pages = _getPages(context);
+                    return _buildPageIndicators(pages);
+                  },
+                ),
 
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 200),
@@ -180,40 +212,49 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                   transitionBuilder: (child, animation) {
                     return FadeTransition(opacity: animation, child: child);
                   },
-                  child: Padding(
-                    key: ValueKey(_currentPage),
-                    padding: EdgeInsets.all(16.w),
-                    child: Column(
-                      children: [
-                        PrimaryButton(
-                          title: _currentPage == _pages.length - 1
-                              ? AppTexts.startNow
-                              : AppTexts.next,
-                          onPressed: _nextPage,
-                        ),
-                        SizedBox(height: 12.h),
-                        if (_currentPage > 0)
-                          FadeTransition(
-                            opacity: _fadeAnimation,
-                            child: Bounce(
-                              onTap: () {
-                                _pageController.previousPage(
-                                  duration: const Duration(milliseconds: 250),
-                                  curve: Curves.easeOut,
-                                );
-                              },
-                              child: Text(
-                                AppTexts.previous,
-                                style: TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.w600,
+                  child: Builder(
+                    builder: (context) {
+                      final pages = _getPages(context);
+                      final localizations = AppLocalizations.of(context);
+                      return Padding(
+                        key: ValueKey(_currentPage),
+                        padding: EdgeInsets.all(16.w),
+                        child: Column(
+                          children: [
+                            PrimaryButton(
+                              title: _currentPage == pages.length - 1
+                                  ? localizations?.startNow ?? AppTexts.startNow
+                                  : localizations?.next ?? AppTexts.next,
+                              onPressed: _nextPage,
+                            ),
+                            SizedBox(height: 12.h),
+                            if (_currentPage > 0)
+                              FadeTransition(
+                                opacity: _fadeAnimation,
+                                child: Bounce(
+                                  onTap: () {
+                                    _pageController.previousPage(
+                                      duration: const Duration(
+                                        milliseconds: 250,
+                                      ),
+                                      curve: Curves.easeOut,
+                                    );
+                                  },
+                                  child: Text(
+                                    localizations?.previous ??
+                                        AppTexts.previous,
+                                    style: TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 16.sp,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
-                          ),
-                      ],
-                    ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
                 ),
               ],
@@ -334,21 +375,21 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     );
   }
 
-  Widget _buildPageIndicators() {
+  Widget _buildPageIndicators(List<OnboardingPageData> pages) {
     return Container(
       height: 50.h,
       padding: EdgeInsets.symmetric(horizontal: 24.w),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: List.generate(
-          _pages.length,
-          (index) => _buildIndicator(index),
+          pages.length,
+          (index) => _buildIndicator(index, pages),
         ),
       ),
     );
   }
 
-  Widget _buildIndicator(int index) {
+  Widget _buildIndicator(int index, List<OnboardingPageData> pages) {
     final isActive = index == _currentPage;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
@@ -358,12 +399,12 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       width: isActive ? 32.w : 8.w,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10.r),
-        gradient: isActive ? _pages[_currentPage].gradient : null,
+        gradient: isActive ? pages[_currentPage].gradient : null,
         color: isActive ? null : AppColors.border.withOpacity(0.5),
         boxShadow: isActive
             ? [
                 BoxShadow(
-                  color: _pages[_currentPage].gradient.colors.first.withOpacity(
+                  color: pages[_currentPage].gradient.colors.first.withOpacity(
                     0.4,
                   ),
                   blurRadius: 8,
@@ -386,6 +427,87 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       default:
         return Icons.info;
     }
+  }
+
+  Widget _buildLanguageSwitcher() {
+    final localizations = AppLocalizations.of(context);
+    final currentLocale = Localizations.localeOf(context);
+    final currentLanguage = appLanguageFromLocale(currentLocale);
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+      decoration: BoxDecoration(
+        color: AppColors.surface.withOpacity(0.8),
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(color: AppColors.border.withOpacity(0.3), width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          GestureDetector(
+            onTap: () {
+              final appState = MyApp.of(context);
+              if (appState != null) {
+                appState.setLocale(AppLanguage.ar.locale);
+              }
+            },
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+              decoration: BoxDecoration(
+                gradient: currentLanguage == AppLanguage.ar
+                    ? AppColors.primaryGradient
+                    : null,
+                color: currentLanguage == AppLanguage.ar
+                    ? null
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(16.r),
+              ),
+              child: Text(
+                localizations?.arabic ?? 'العربية',
+                style: TextStyle(
+                  color: currentLanguage == AppLanguage.ar
+                      ? AppColors.textOnPrimary
+                      : AppColors.textSecondary,
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(width: 4.w),
+          GestureDetector(
+            onTap: () {
+              final appState = MyApp.of(context);
+              if (appState != null) {
+                appState.setLocale(AppLanguage.en.locale);
+              }
+            },
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+              decoration: BoxDecoration(
+                gradient: currentLanguage == AppLanguage.en
+                    ? AppColors.primaryGradient
+                    : null,
+                color: currentLanguage == AppLanguage.en
+                    ? null
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(16.r),
+              ),
+              child: Text(
+                localizations?.english ?? 'English',
+                style: TextStyle(
+                  color: currentLanguage == AppLanguage.en
+                      ? AppColors.textOnPrimary
+                      : AppColors.textSecondary,
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

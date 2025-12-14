@@ -100,11 +100,37 @@ class DesignRepository {
         data: request.toJson(),
       );
 
+      print('DesignRepository: addDesign response received');
+      print('  statusCode: ${response.statusCode}');
+      print('  data: ${response.data}');
+
       if (response.statusCode != null &&
           response.statusCode! >= 200 &&
-          response.statusCode! < 300 &&
-          response.data != null) {
-        return AddDesignResponse.fromJson(response.data);
+          response.statusCode! < 300) {
+        if (response.data != null) {
+          print('DesignRepository: Parsing response data');
+          final parsedResponse = AddDesignResponse.fromJson(response.data);
+          print('DesignRepository: Response parsed successfully');
+          return parsedResponse;
+        } else {
+          print(
+            'DesignRepository: response.data is null, creating empty response',
+          );
+          // Return success response even if data is null
+          // Extract message from response if available
+          final message =
+              response.data is Map && response.data['message'] != null
+              ? response.data['message']
+              : 'Item has been added successfully';
+          return AddDesignResponse(
+            data: null,
+            result: response.data is Map && response.data['result'] != null
+                ? response.data['result']
+                : 'Success',
+            message: message,
+            status: response.statusCode ?? 200,
+          );
+        }
       } else {
         final errorMessage = response.data is Map
             ? response.data['message'] ?? 'Failed to add design'
@@ -112,6 +138,7 @@ class DesignRepository {
         throw Exception(errorMessage);
       }
     } catch (e) {
+      print('DesignRepository: addDesign error: $e');
       rethrow;
     }
   }

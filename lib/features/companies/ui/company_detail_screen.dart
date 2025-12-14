@@ -197,7 +197,6 @@ class CompanyDetailScreen extends StatelessWidget {
                     ),
                   ),
 
-                  // Image
                   if (company.imageUrlString.isNotEmpty)
                     TweenAnimationBuilder<double>(
                       tween: Tween(begin: 0.0, end: 1.0),
@@ -258,7 +257,6 @@ class CompanyDetailScreen extends StatelessWidget {
 
                   SizedBox(height: 24.h),
 
-                  // Details Card
                   TweenAnimationBuilder<double>(
                     tween: Tween(begin: 0.0, end: 1.0),
                     duration: const Duration(milliseconds: 800),
@@ -287,7 +285,6 @@ class CompanyDetailScreen extends StatelessWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Company Name
                                   Text(
                                     company.companyName,
                                     style: TextStyle(
@@ -474,13 +471,22 @@ class CompanyDetailScreen extends StatelessWidget {
                                         color: AppColors.textPrimary,
                                       ),
                                     ),
-                                    SizedBox(height: 12.h),
-                                    Text(
-                                      '${company.products.length} ${AppTexts.products}',
-                                      style: TextStyle(
-                                        fontSize: 14.sp,
-                                        color: AppColors.textSecondary,
-                                      ),
+                                    SizedBox(height: 16.h),
+                                    ListView.builder(
+                                      shrinkWrap: true,
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
+                                      itemCount: company.products.length,
+                                      itemBuilder: (context, index) {
+                                        return Padding(
+                                          padding: EdgeInsets.only(
+                                            bottom: 16.h,
+                                          ),
+                                          child: _buildProductCard(
+                                            company.products[index],
+                                          ),
+                                        );
+                                      },
                                     ),
                                   ],
 
@@ -526,4 +532,96 @@ class CompanyDetailScreen extends StatelessWidget {
       },
     );
   }
+
+  Widget _buildProductCard(CompanyProduct product) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppColors.border.withOpacity(0.3), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadowLight,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (product.imageUrlString.isNotEmpty)
+            ClipRRect(
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(12.r),
+                topRight: Radius.circular(12.r),
+              ),
+              child: CachedNetworkImage(
+                imageUrl: product.imageUrlString,
+                width: double.infinity,
+                height: 200.h,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Container(
+                  height: 200.h,
+                  color: AppColors.surfaceVariant,
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+                errorWidget: (context, url, error) => Container(
+                  height: 200.h,
+                  color: AppColors.surfaceVariant,
+                  child: Icon(
+                    Icons.image_not_supported,
+                    color: AppColors.textSecondary,
+                    size: 32.sp,
+                  ),
+                ),
+              ),
+            ),
+          Padding(
+            padding: EdgeInsets.all(16.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  product.name,
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                SizedBox(height: 12.h),
+
+
+                Text(
+                  AppTexts.companyDescription,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                SizedBox(height: 8.h),
+                Text(
+                  product.description,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    color: AppColors.textSecondary,
+                    height: 1.5,
+                  ),
+                ),
+
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 }

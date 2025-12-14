@@ -16,6 +16,7 @@ class RegisterRequest {
   
 
   final String? address;
+  final String? country;
   final String? city;
   final String? state;
   final String? workshopName;
@@ -30,6 +31,7 @@ class RegisterRequest {
     required this.phone,
     required this.password,
     this.address,
+    this.country,
     this.city,
     this.state,
     this.workshopName,
@@ -51,6 +53,7 @@ class RegisterRequest {
     switch (role) {
       case UserRole.user:
         if (address != null) data['address'] = address;
+        if (country != null) data['country'] = country;
         if (city != null) data['city'] = city;
         if (state != null) data['state'] = state;
         break;
@@ -60,6 +63,7 @@ class RegisterRequest {
       case UserRole.seller:
         if (workshopName != null) data['workshop_name'] = workshopName;
         if (address != null) data['address'] = address;
+        if (country != null) data['country'] = country;
         if (city != null) data['city'] = city;
         if (state != null) data['state'] = state;
         if (natureOfWork != null) data['nature_of_work'] = natureOfWork;

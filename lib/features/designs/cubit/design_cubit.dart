@@ -45,10 +45,14 @@ class DesignCubit extends Cubit<DesignState> {
     emit(DesignUploading());
     try {
       final response = await _repository.addDesign(request);
+      print('DesignCubit: addDesign response received');
+      print('  result: ${response.result}');
+      print('  message: ${response.message}');
+      print('  data: ${response.data}');
       emit(DesignUploaded(response.data));
-      // Reload designs after adding
-      await loadDesigns();
+      print('DesignCubit: DesignUploaded state emitted');
     } catch (e) {
+      print('DesignCubit: addDesign error: $e');
       emit(DesignUploadError(e.toString()));
     }
   }
@@ -66,7 +70,7 @@ class DesignCubit extends Cubit<DesignState> {
       currentDesigns = currentState.designs;
     }
 
-    emit(DesignDownloading(currentDesigns, design.id));
+    emit(DesignDownloading(currentDesigns, design.id, isFile: false));
     try {
       final imageUrl = design.imageUrlString;
       if (imageUrl.isEmpty) {
@@ -125,7 +129,14 @@ class DesignCubit extends Cubit<DesignState> {
             result['isSuccess'] == true &&
             result['filePath'] != null) {
           final savedPath = result['filePath'] as String;
-          emit(DesignDownloaded(currentDesigns, design.id, savedPath));
+          emit(
+            DesignDownloaded(
+              currentDesigns,
+              design.id,
+              savedPath,
+              isFile: false,
+            ),
+          );
         } else {
           final errorMsg =
               result?['errorMessage'] as String? ?? 'Unknown error';
@@ -135,7 +146,83 @@ class DesignCubit extends Cubit<DesignState> {
         throw Exception('الملف غير موجود بعد التنزيل');
       }
     } catch (e) {
-      emit(DesignDownloadError(currentDesigns, design.id, e.toString()));
+      emit(
+        DesignDownloadError(
+          currentDesigns,
+          design.id,
+          e.toString(),
+          isFile: false,
+        ),
+      );
+    }
+  }
+
+  Future<void> downloadFile(Design design) async {
+    final currentState = state;
+    List<Design> currentDesigns = [];
+    if (currentState is DesignsLoaded) {
+      currentDesigns = currentState.designs;
+    } else if (currentState is DesignDownloading) {
+      currentDesigns = currentState.designs;
+    } else if (currentState is DesignDownloaded) {
+      currentDesigns = currentState.designs;
+    } else if (currentState is DesignDownloadError) {
+      currentDesigns = currentState.designs;
+    }
+
+    emit(DesignDownloading(currentDesigns, design.id, isFile: true));
+    try {
+      final fileUrl = design.fileUrlString;
+      if (fileUrl.isEmpty) {
+        throw Exception('File URL is not available');
+      }
+
+      if (Platform.isAndroid) {
+        if (await Permission.storage.isDenied) {
+          await Permission.storage.request();
+        }
+      }
+
+      final directory =
+          await getExternalStorageDirectory() ??
+          await getApplicationDocumentsDirectory();
+
+      final downloadsDir = Directory('${directory.path}/Downloads');
+      if (!await downloadsDir.exists()) {
+        await downloadsDir.create(recursive: true);
+      }
+
+      final uri = Uri.parse(fileUrl);
+      final urlFileName = uri.pathSegments.isNotEmpty
+          ? uri.pathSegments.last
+          : 'design_file_${design.id}.pdf';
+
+      final cleanFileName = urlFileName.split('?').first;
+      final fileName = cleanFileName.isNotEmpty
+          ? cleanFileName
+          : 'design_file_${design.id}_${DateTime.now().millisecondsSinceEpoch}.pdf';
+
+      final savePath = '${downloadsDir.path}/$fileName';
+
+      await _repository.downloadFile(fileUrl, savePath);
+
+      final file = File(savePath);
+      if (await file.exists()) {
+        emit(
+          DesignDownloaded(currentDesigns, design.id, savePath, isFile: true),
+        );
+      } else {
+        throw Exception('الملف غير موجود بعد التنزيل');
+      }
+    } catch (e) {
+      emit(
+        DesignDownloadError(
+          currentDesigns,
+          design.id,
+          e.toString(),
+          isFile: true,
+        ),
+      );
     }
   }
 }
