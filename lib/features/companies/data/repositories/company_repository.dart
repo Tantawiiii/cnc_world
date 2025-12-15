@@ -7,9 +7,12 @@ import '../models/company_models.dart';
 class CompanyRepository {
   final ApiService _apiService = di.sl<ApiService>();
 
-  Future<CompaniesListResponse> getCompanies() async {
+  Future<CompaniesListResponse> getCompanies({int? page}) async {
     try {
-      final response = await _apiService.get('/api/get-company');
+      final response = await _apiService.get(
+        '/api/get-company',
+        queryParameters: page != null ? {'page': page} : null,
+      );
 
       if (response.statusCode != null &&
           response.statusCode! >= 200 &&

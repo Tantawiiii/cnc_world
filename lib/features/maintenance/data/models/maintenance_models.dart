@@ -59,13 +59,13 @@ class EngineersResponse {
 
 class MaintenanceRequest {
   final String problemDetails;
-  final int engineerId;
+  final int? engineerId;
   final String assignedBy;
   final int image;
 
   MaintenanceRequest({
     required this.problemDetails,
-    required this.engineerId,
+    this.engineerId,
     required this.assignedBy,
     required this.image,
   });
@@ -73,7 +73,7 @@ class MaintenanceRequest {
   Map<String, dynamic> toJson() {
     return {
       'problem_details': problemDetails,
-      'engineer_id': engineerId,
+      if (engineerId != null) 'engineer_id': engineerId,
       'assigned_by': assignedBy,
       'image': image,
     };

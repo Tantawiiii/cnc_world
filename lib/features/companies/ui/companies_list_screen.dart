@@ -13,13 +13,70 @@ import '../cubit/company_state.dart';
 import '../data/models/company_models.dart';
 import '../data/repositories/company_repository.dart';
 
-class CompaniesListScreen extends StatelessWidget {
+class CompaniesListScreen extends StatefulWidget {
   const CompaniesListScreen({super.key});
 
   @override
+  State<CompaniesListScreen> createState() => _CompaniesListScreenState();
+}
+
+class _CompaniesListScreenState extends State<CompaniesListScreen> {
+  final ScrollController _scrollController = ScrollController();
+  bool _isLoadingMore = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.position.pixels;
+
+    if (currentScroll >= maxScroll * 0.8) {
+      final cubit = context.read<CompanyCubit>();
+      final currentState = cubit.state;
+
+      if (currentState is CompaniesLoaded &&
+          currentState.hasMore &&
+          !_isLoadingMore &&
+          currentState is! CompaniesLoadingMore) {
+        _isLoadingMore = true;
+        cubit
+            .loadMoreCompanies()
+            .then((_) {
+              if (mounted) {
+                _isLoadingMore = false;
+              }
+            })
+            .catchError((_) {
+              if (mounted) {
+                _isLoadingMore = false;
+              }
+            });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final locale = Localizations.localeOf(context);
+    final textDirection = locale.languageCode == 'ar'
+        ? TextDirection.rtl
+        : TextDirection.ltr;
+
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: textDirection,
       child: Scaffold(
         body: Container(
           decoration: BoxDecoration(
@@ -60,43 +117,34 @@ class CompaniesListScreen extends StatelessWidget {
                 Expanded(
                   child: BlocBuilder<CompanyCubit, CompanyState>(
                     builder: (context, state) {
-                      if (state is CompaniesLoading) {
+                      if (state is CompaniesLoading &&
+                          state is! CompaniesLoadingMore) {
                         return _buildShimmerList();
-                      } else if (state is CompaniesLoaded) {
-                        if (state.companies.isEmpty) {
-                          return Center(
-                            child: Text(
-                              AppTexts.noCompaniesAvailable,
-                              style: TextStyle(
-                                fontSize: 16.sp,
-                                color: AppColors.textSecondary,
-                              ),
+                      }
+
+                      List<Company> companies = [];
+                      bool hasMore = false;
+
+                      if (state is CompaniesLoaded) {
+                        companies = state.companies;
+                        hasMore = state.hasMore;
+                      }
+
+                      if (companies.isEmpty &&
+                          state is! CompaniesLoading &&
+                          state is! CompaniesLoadingMore) {
+                        return Center(
+                          child: Text(
+                            AppTexts.noCompaniesAvailable,
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              color: AppColors.textSecondary,
                             ),
-                          );
-                        }
-                        return RefreshIndicator(
-                          onRefresh: () async {
-                            context.read<CompanyCubit>().loadCompanies();
-                          },
-                          color: AppColors.primary,
-                          child: ListView.separated(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 16.w,
-                              vertical: 8.h,
-                            ),
-                            itemCount: state.companies.length,
-                            separatorBuilder: (context, index) =>
-                                SizedBox(height: 12.h),
-                            itemBuilder: (context, index) {
-                              return _buildAnimatedCompanyCard(
-                                context,
-                                state.companies[index],
-                                index,
-                              );
-                            },
                           ),
                         );
-                      } else if (state is CompaniesError) {
+                      }
+
+                      if (state is CompaniesError) {
                         return Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -126,6 +174,48 @@ class CompaniesListScreen extends StatelessWidget {
                           ),
                         );
                       }
+
+                      if (companies.isNotEmpty) {
+                        return RefreshIndicator(
+                          onRefresh: () async {
+                            context.read<CompanyCubit>().loadCompanies();
+                          },
+                          color: AppColors.primary,
+                          child: ListView.separated(
+                            controller: _scrollController,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16.w,
+                              vertical: 8.h,
+                            ),
+                            itemCount: companies.length + (hasMore ? 1 : 0),
+                            separatorBuilder: (context, index) {
+                              if (index >= companies.length) {
+                                return const SizedBox.shrink();
+                              }
+                              return SizedBox(height: 12.h);
+                            },
+                            itemBuilder: (context, index) {
+                              if (index >= companies.length) {
+                                // Loading more indicator
+                                return Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 16.h),
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                );
+                              }
+                              return _buildAnimatedCompanyCard(
+                                context,
+                                companies[index],
+                                index,
+                              );
+                            },
+                          ),
+                        );
+                      }
+
                       return const SizedBox.shrink();
                     },
                   ),
@@ -149,13 +239,15 @@ class CompaniesListScreen extends StatelessWidget {
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
         final delay = index * 0.1;
-        final adjustedValue = ((value - delay).clamp(0.0, 1.0) / (1.0 - delay))
-            .clamp(0.0, 1.0);
+        // Fix division by zero when delay >= 1.0
+        final adjustedValue = delay >= 1.0
+            ? value
+            : ((value - delay).clamp(0.0, 1.0) / (1.0 - delay)).clamp(0.0, 1.0);
 
         return Transform.translate(
           offset: Offset(0, 50 * (1 - adjustedValue)),
           child: Opacity(
-            opacity: adjustedValue,
+            opacity: adjustedValue > 0 ? adjustedValue : 1.0,
             child: Transform.scale(
               scale: 0.85 + (0.15 * adjustedValue),
               child: _buildCompanyCard(context, company),

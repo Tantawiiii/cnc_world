@@ -12,7 +12,7 @@ class DesignRepository {
   Future<DesignsListResponse> getDesigns({int? page}) async {
     try {
       final response = await _apiService.get(
-        '/api/design',
+        '/api/get-design',
         queryParameters: page != null ? {'page': page} : null,
       );
 

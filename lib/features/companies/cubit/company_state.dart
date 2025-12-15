@@ -12,13 +12,30 @@ class CompanyInitial extends CompanyState {}
 
 class CompaniesLoading extends CompanyState {}
 
+class CompaniesLoadingMore extends CompaniesLoaded {
+  const CompaniesLoadingMore(
+    super.companies, {
+    super.meta,
+    super.links,
+    super.hasMore,
+  });
+}
+
 class CompaniesLoaded extends CompanyState {
   final List<Company> companies;
+  final CompaniesMeta? meta;
+  final CompaniesLinks? links;
+  final bool hasMore;
 
-  const CompaniesLoaded(this.companies);
+  const CompaniesLoaded(
+    this.companies, {
+    this.meta,
+    this.links,
+    this.hasMore = false,
+  });
 
   @override
-  List<Object?> get props => [companies];
+  List<Object?> get props => [companies, meta, links, hasMore];
 }
 
 class CompaniesError extends CompanyState {

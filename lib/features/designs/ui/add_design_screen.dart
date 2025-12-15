@@ -220,11 +220,11 @@ class _AddDesignScreenState extends State<AddDesignScreen> {
                           duration: const Duration(seconds: 2),
                         ),
                       );
-                      // Go back after showing toast
+                      // Go back after showing toast with success result
                       Future.delayed(const Duration(milliseconds: 100), () {
                         if (mounted) {
                           print('AddDesignScreen: Navigating back');
-                          Navigator.of(context).pop();
+                          Navigator.of(context).pop(true);
                         }
                       });
                     } else if (state is DesignUploadError) {

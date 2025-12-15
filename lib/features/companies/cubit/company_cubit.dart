@@ -8,13 +8,74 @@ class CompanyCubit extends Cubit<CompanyState> {
 
   CompanyCubit(this._repository) : super(CompanyInitial());
 
-  Future<void> loadCompanies() async {
-    emit(CompaniesLoading());
+  Future<void> loadCompanies({int page = 1, bool loadMore = false}) async {
+    if (!loadMore) {
+      emit(CompaniesLoading());
+    } else {
+      final currentState = state;
+      if (currentState is CompaniesLoaded) {
+        emit(
+          CompaniesLoadingMore(
+            currentState.companies,
+            meta: currentState.meta,
+            links: currentState.links,
+            hasMore: currentState.hasMore,
+          ),
+        );
+      } else {
+        emit(CompaniesLoading());
+      }
+    }
+
     try {
-      final response = await _repository.getCompanies();
-      emit(CompaniesLoaded(response.data));
+      final response = await _repository.getCompanies(page: page);
+      final hasMore =
+          response.meta != null &&
+          response.meta!.currentPage < response.meta!.lastPage;
+
+      if (loadMore) {
+        final currentState = state;
+        if (currentState is CompaniesLoaded) {
+          final existingCompanies = currentState.companies;
+          final allCompanies = [...existingCompanies, ...response.data];
+          emit(
+            CompaniesLoaded(
+              allCompanies,
+              meta: response.meta,
+              links: response.links,
+              hasMore: hasMore,
+            ),
+          );
+        } else {
+          emit(
+            CompaniesLoaded(
+              response.data,
+              meta: response.meta,
+              links: response.links,
+              hasMore: hasMore,
+            ),
+          );
+        }
+      } else {
+        emit(
+          CompaniesLoaded(
+            response.data,
+            meta: response.meta,
+            links: response.links,
+            hasMore: hasMore,
+          ),
+        );
+      }
     } catch (e) {
       emit(CompaniesError(e.toString()));
+    }
+  }
+
+  Future<void> loadMoreCompanies() async {
+    final currentState = state;
+    if (currentState is CompaniesLoaded && currentState.hasMore) {
+      final nextPage = (currentState.meta?.currentPage ?? 1) + 1;
+      await loadCompanies(page: nextPage, loadMore: true);
     }
   }
 

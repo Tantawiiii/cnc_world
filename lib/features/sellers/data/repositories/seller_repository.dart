@@ -5,9 +5,12 @@ import '../models/seller_models.dart';
 class SellerRepository {
   final ApiService _apiService = di.sl<ApiService>();
 
-  Future<SellersListResponse> getSellers() async {
+  Future<SellersListResponse> getSellers({int? page}) async {
     try {
-      final response = await _apiService.get('/api/get-seller');
+      final response = await _apiService.get(
+        '/api/get-seller',
+        queryParameters: page != null ? {'page': page} : null,
+      );
 
       if (response.statusCode != null &&
           response.statusCode! >= 200 &&

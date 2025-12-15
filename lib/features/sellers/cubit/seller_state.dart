@@ -12,13 +12,30 @@ class SellerInitial extends SellerState {}
 
 class SellersLoading extends SellerState {}
 
+class SellersLoadingMore extends SellersLoaded {
+  const SellersLoadingMore(
+    super.sellers, {
+    super.meta,
+    super.links,
+    super.hasMore,
+  });
+}
+
 class SellersLoaded extends SellerState {
   final List<Seller> sellers;
+  final SellersMeta? meta;
+  final SellersLinks? links;
+  final bool hasMore;
 
-  const SellersLoaded(this.sellers);
+  const SellersLoaded(
+    this.sellers, {
+    this.meta,
+    this.links,
+    this.hasMore = false,
+  });
 
   @override
-  List<Object?> get props => [sellers];
+  List<Object?> get props => [sellers, meta, links, hasMore];
 }
 
 class SellersError extends SellerState {

@@ -12,13 +12,30 @@ class MerchantInitial extends MerchantState {}
 
 class MerchantsLoading extends MerchantState {}
 
+class MerchantsLoadingMore extends MerchantsLoaded {
+  const MerchantsLoadingMore(
+    super.merchants, {
+    super.meta,
+    super.links,
+    super.hasMore,
+  });
+}
+
 class MerchantsLoaded extends MerchantState {
   final List<Merchant> merchants;
+  final MerchantsMeta? meta;
+  final MerchantsLinks? links;
+  final bool hasMore;
 
-  const MerchantsLoaded(this.merchants);
+  const MerchantsLoaded(
+    this.merchants, {
+    this.meta,
+    this.links,
+    this.hasMore = false,
+  });
 
   @override
-  List<Object?> get props => [merchants];
+  List<Object?> get props => [merchants, meta, links, hasMore];
 }
 
 class MerchantsError extends MerchantState {

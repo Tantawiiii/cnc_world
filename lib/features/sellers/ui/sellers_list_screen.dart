@@ -12,13 +12,70 @@ import '../cubit/seller_state.dart';
 import '../data/models/seller_models.dart';
 import '../data/repositories/seller_repository.dart';
 
-class SellersListScreen extends StatelessWidget {
+class SellersListScreen extends StatefulWidget {
   const SellersListScreen({super.key});
 
   @override
+  State<SellersListScreen> createState() => _SellersListScreenState();
+}
+
+class _SellersListScreenState extends State<SellersListScreen> {
+  final ScrollController _scrollController = ScrollController();
+  bool _isLoadingMore = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.position.pixels;
+
+    if (currentScroll >= maxScroll * 0.8) {
+      final cubit = context.read<SellerCubit>();
+      final currentState = cubit.state;
+
+      if (currentState is SellersLoaded &&
+          currentState.hasMore &&
+          !_isLoadingMore &&
+          currentState is! SellersLoadingMore) {
+        _isLoadingMore = true;
+        cubit
+            .loadMoreSellers()
+            .then((_) {
+              if (mounted) {
+                _isLoadingMore = false;
+              }
+            })
+            .catchError((_) {
+              if (mounted) {
+                _isLoadingMore = false;
+              }
+            });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final locale = Localizations.localeOf(context);
+    final textDirection = locale.languageCode == 'ar'
+        ? TextDirection.rtl
+        : TextDirection.ltr;
+
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: textDirection,
       child: Scaffold(
         body: Container(
           decoration: BoxDecoration(
@@ -59,43 +116,34 @@ class SellersListScreen extends StatelessWidget {
                 Expanded(
                   child: BlocBuilder<SellerCubit, SellerState>(
                     builder: (context, state) {
-                      if (state is SellersLoading) {
+                      if (state is SellersLoading &&
+                          state is! SellersLoadingMore) {
                         return _buildShimmerList();
-                      } else if (state is SellersLoaded) {
-                        if (state.sellers.isEmpty) {
-                          return Center(
-                            child: Text(
-                              AppTexts.noSellersAvailable,
-                              style: TextStyle(
-                                fontSize: 16.sp,
-                                color: AppColors.textSecondary,
-                              ),
+                      }
+
+                      List<Seller> sellers = [];
+                      bool hasMore = false;
+
+                      if (state is SellersLoaded) {
+                        sellers = state.sellers;
+                        hasMore = state.hasMore;
+                      }
+
+                      if (sellers.isEmpty &&
+                          state is! SellersLoading &&
+                          state is! SellersLoadingMore) {
+                        return Center(
+                          child: Text(
+                            AppTexts.noSellersAvailable,
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              color: AppColors.textSecondary,
                             ),
-                          );
-                        }
-                        return RefreshIndicator(
-                          onRefresh: () async {
-                            context.read<SellerCubit>().loadSellers();
-                          },
-                          color: AppColors.primary,
-                          child: ListView.separated(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 16.w,
-                              vertical: 8.h,
-                            ),
-                            itemCount: state.sellers.length,
-                            separatorBuilder: (context, index) =>
-                                SizedBox(height: 12.h),
-                            itemBuilder: (context, index) {
-                              return _buildAnimatedSellerCard(
-                                context,
-                                state.sellers[index],
-                                index,
-                              );
-                            },
                           ),
                         );
-                      } else if (state is SellersError) {
+                      }
+
+                      if (state is SellersError) {
                         return Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -125,6 +173,48 @@ class SellersListScreen extends StatelessWidget {
                           ),
                         );
                       }
+
+                      if (sellers.isNotEmpty) {
+                        return RefreshIndicator(
+                          onRefresh: () async {
+                            context.read<SellerCubit>().loadSellers();
+                          },
+                          color: AppColors.primary,
+                          child: ListView.separated(
+                            controller: _scrollController,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16.w,
+                              vertical: 8.h,
+                            ),
+                            itemCount: sellers.length + (hasMore ? 1 : 0),
+                            separatorBuilder: (context, index) {
+                              if (index >= sellers.length) {
+                                return const SizedBox.shrink();
+                              }
+                              return SizedBox(height: 12.h);
+                            },
+                            itemBuilder: (context, index) {
+                              if (index >= sellers.length) {
+                                // Loading more indicator
+                                return Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 16.h),
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                );
+                              }
+                              return _buildAnimatedSellerCard(
+                                context,
+                                sellers[index],
+                                index,
+                              );
+                            },
+                          ),
+                        );
+                      }
+
                       return const SizedBox.shrink();
                     },
                   ),
@@ -148,13 +238,15 @@ class SellersListScreen extends StatelessWidget {
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
         final delay = index * 0.1;
-        final adjustedValue = ((value - delay).clamp(0.0, 1.0) / (1.0 - delay))
-            .clamp(0.0, 1.0);
+        // Fix division by zero when delay >= 1.0
+        final adjustedValue = delay >= 1.0
+            ? value
+            : ((value - delay).clamp(0.0, 1.0) / (1.0 - delay)).clamp(0.0, 1.0);
 
         return Transform.translate(
           offset: Offset(0, 50 * (1 - adjustedValue)),
           child: Opacity(
-            opacity: adjustedValue,
+            opacity: adjustedValue > 0 ? adjustedValue : 1.0,
             child: Transform.scale(
               scale: 0.85 + (0.15 * adjustedValue),
               child: _buildSellerCard(context, seller),

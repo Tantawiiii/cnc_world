@@ -7,9 +7,12 @@ import '../models/merchant_models.dart';
 class MerchantRepository {
   final ApiService _apiService = di.sl<ApiService>();
 
-  Future<MerchantsListResponse> getMerchants() async {
+  Future<MerchantsListResponse> getMerchants({int? page}) async {
     try {
-      final response = await _apiService.get('/api/get-merchant');
+      final response = await _apiService.get(
+        '/api/get-merchant',
+        queryParameters: page != null ? {'page': page} : null,
+      );
 
       if (response.statusCode != null &&
           response.statusCode! >= 200 &&

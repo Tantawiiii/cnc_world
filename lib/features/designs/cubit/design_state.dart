@@ -10,15 +10,32 @@ abstract class DesignState extends Equatable {
 
 class DesignInitial extends DesignState {}
 
+class DesignsLoadingMore extends DesignsLoaded {
+  const DesignsLoadingMore(
+    super.designs, {
+    super.meta,
+    super.links,
+    super.hasMore,
+  });
+}
+
 class DesignsLoading extends DesignState {}
 
 class DesignsLoaded extends DesignState {
   final List<Design> designs;
+  final DesignsMeta? meta;
+  final DesignsLinks? links;
+  final bool hasMore;
 
-  const DesignsLoaded(this.designs);
+  const DesignsLoaded(
+    this.designs, {
+    this.meta,
+    this.links,
+    this.hasMore = false,
+  });
 
   @override
-  List<Object?> get props => [designs];
+  List<Object?> get props => [designs, meta, links, hasMore];
 }
 
 class DesignsError extends DesignState {
@@ -54,10 +71,17 @@ class DesignDownloading extends DesignsLoaded {
   final int designId;
   final bool isFile; // true for file download, false for image download
 
-  const DesignDownloading(super.designs, this.designId, {this.isFile = false});
+  const DesignDownloading(
+    super.designs,
+    this.designId, {
+    this.isFile = false,
+    super.meta,
+    super.links,
+    super.hasMore,
+  });
 
   @override
-  List<Object?> get props => [designs, designId, isFile];
+  List<Object?> get props => [designs, designId, isFile, meta, links, hasMore];
 }
 
 class DesignDownloaded extends DesignsLoaded {
@@ -70,10 +94,21 @@ class DesignDownloaded extends DesignsLoaded {
     this.designId,
     this.filePath, {
     this.isFile = false,
+    super.meta,
+    super.links,
+    super.hasMore,
   });
 
   @override
-  List<Object?> get props => [designs, designId, filePath, isFile];
+  List<Object?> get props => [
+    designs,
+    designId,
+    filePath,
+    isFile,
+    meta,
+    links,
+    hasMore,
+  ];
 }
 
 class DesignDownloadError extends DesignsLoaded {
@@ -86,8 +121,19 @@ class DesignDownloadError extends DesignsLoaded {
     this.designId,
     this.message, {
     this.isFile = false,
+    super.meta,
+    super.links,
+    super.hasMore,
   });
 
   @override
-  List<Object?> get props => [designs, designId, message, isFile];
+  List<Object?> get props => [
+    designs,
+    designId,
+    message,
+    isFile,
+    meta,
+    links,
+    hasMore,
+  ];
 }

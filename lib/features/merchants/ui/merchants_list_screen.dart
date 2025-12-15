@@ -13,13 +13,71 @@ import '../cubit/merchant_state.dart';
 import '../data/models/merchant_models.dart';
 import '../data/repositories/merchant_repository.dart';
 
-class MerchantsListScreen extends StatelessWidget {
+class MerchantsListScreen extends StatefulWidget {
   const MerchantsListScreen({super.key});
 
   @override
+  State<MerchantsListScreen> createState() => _MerchantsListScreenState();
+}
+
+class _MerchantsListScreenState extends State<MerchantsListScreen> {
+  final ScrollController _scrollController = ScrollController();
+  bool _isLoadingMore = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.position.pixels;
+
+    // Load more when user scrolls to 80% of the list
+    if (currentScroll >= maxScroll * 0.8) {
+      final cubit = context.read<MerchantCubit>();
+      final currentState = cubit.state;
+
+      if (currentState is MerchantsLoaded &&
+          currentState.hasMore &&
+          !_isLoadingMore &&
+          currentState is! MerchantsLoadingMore) {
+        _isLoadingMore = true;
+        cubit
+            .loadMoreMerchants()
+            .then((_) {
+              if (mounted) {
+                _isLoadingMore = false;
+              }
+            })
+            .catchError((_) {
+              if (mounted) {
+                _isLoadingMore = false;
+              }
+            });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final locale = Localizations.localeOf(context);
+    final textDirection = locale.languageCode == 'ar'
+        ? TextDirection.rtl
+        : TextDirection.ltr;
+
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: textDirection,
       child: Scaffold(
         body: Container(
           decoration: BoxDecoration(
@@ -60,43 +118,34 @@ class MerchantsListScreen extends StatelessWidget {
                 Expanded(
                   child: BlocBuilder<MerchantCubit, MerchantState>(
                     builder: (context, state) {
-                      if (state is MerchantsLoading) {
+                      if (state is MerchantsLoading &&
+                          state is! MerchantsLoadingMore) {
                         return _buildShimmerList();
-                      } else if (state is MerchantsLoaded) {
-                        if (state.merchants.isEmpty) {
-                          return Center(
-                            child: Text(
-                              AppTexts.noMerchantsAvailable,
-                              style: TextStyle(
-                                fontSize: 16.sp,
-                                color: AppColors.textSecondary,
-                              ),
+                      }
+
+                      List<Merchant> merchants = [];
+                      bool hasMore = false;
+
+                      if (state is MerchantsLoaded) {
+                        merchants = state.merchants;
+                        hasMore = state.hasMore;
+                      }
+
+                      if (merchants.isEmpty &&
+                          state is! MerchantsLoading &&
+                          state is! MerchantsLoadingMore) {
+                        return Center(
+                          child: Text(
+                            AppTexts.noMerchantsAvailable,
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              color: AppColors.textSecondary,
                             ),
-                          );
-                        }
-                        return RefreshIndicator(
-                          onRefresh: () async {
-                            context.read<MerchantCubit>().loadMerchants();
-                          },
-                          color: AppColors.primary,
-                          child: ListView.separated(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 16.w,
-                              vertical: 8.h,
-                            ),
-                            itemCount: state.merchants.length,
-                            separatorBuilder: (context, index) =>
-                                SizedBox(height: 12.h),
-                            itemBuilder: (context, index) {
-                              return _buildAnimatedMerchantCard(
-                                context,
-                                state.merchants[index],
-                                index,
-                              );
-                            },
                           ),
                         );
-                      } else if (state is MerchantsError) {
+                      }
+
+                      if (state is MerchantsError) {
                         return Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -126,6 +175,48 @@ class MerchantsListScreen extends StatelessWidget {
                           ),
                         );
                       }
+
+                      if (merchants.isNotEmpty) {
+                        return RefreshIndicator(
+                          onRefresh: () async {
+                            context.read<MerchantCubit>().loadMerchants();
+                          },
+                          color: AppColors.primary,
+                          child: ListView.separated(
+                            controller: _scrollController,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16.w,
+                              vertical: 8.h,
+                            ),
+                            itemCount: merchants.length + (hasMore ? 1 : 0),
+                            separatorBuilder: (context, index) {
+                              if (index >= merchants.length) {
+                                return const SizedBox.shrink();
+                              }
+                              return SizedBox(height: 12.h);
+                            },
+                            itemBuilder: (context, index) {
+                              if (index >= merchants.length) {
+                                // Loading more indicator
+                                return Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 16.h),
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                );
+                              }
+                              return _buildAnimatedMerchantCard(
+                                context,
+                                merchants[index],
+                                index,
+                              );
+                            },
+                          ),
+                        );
+                      }
+
                       return const SizedBox.shrink();
                     },
                   ),
@@ -149,13 +240,15 @@ class MerchantsListScreen extends StatelessWidget {
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
         final delay = index * 0.1;
-        final adjustedValue = ((value - delay).clamp(0.0, 1.0) / (1.0 - delay))
-            .clamp(0.0, 1.0);
+        // Fix division by zero when delay >= 1.0
+        final adjustedValue = delay >= 1.0
+            ? value
+            : ((value - delay).clamp(0.0, 1.0) / (1.0 - delay)).clamp(0.0, 1.0);
 
         return Transform.translate(
           offset: Offset(0, 50 * (1 - adjustedValue)),
           child: Opacity(
-            opacity: adjustedValue,
+            opacity: adjustedValue > 0 ? adjustedValue : 1.0,
             child: Transform.scale(
               scale: 0.85 + (0.15 * adjustedValue),
               child: _buildMerchantCard(context, merchant),

@@ -8,13 +8,74 @@ class MerchantCubit extends Cubit<MerchantState> {
 
   MerchantCubit(this._repository) : super(MerchantInitial());
 
-  Future<void> loadMerchants() async {
-    emit(MerchantsLoading());
+  Future<void> loadMerchants({int page = 1, bool loadMore = false}) async {
+    if (!loadMore) {
+      emit(MerchantsLoading());
+    } else {
+      final currentState = state;
+      if (currentState is MerchantsLoaded) {
+        emit(
+          MerchantsLoadingMore(
+            currentState.merchants,
+            meta: currentState.meta,
+            links: currentState.links,
+            hasMore: currentState.hasMore,
+          ),
+        );
+      } else {
+        emit(MerchantsLoading());
+      }
+    }
+
     try {
-      final response = await _repository.getMerchants();
-      emit(MerchantsLoaded(response.data));
+      final response = await _repository.getMerchants(page: page);
+      final hasMore =
+          response.meta != null &&
+          response.meta!.currentPage < response.meta!.lastPage;
+
+      if (loadMore) {
+        final currentState = state;
+        if (currentState is MerchantsLoaded) {
+          final existingMerchants = currentState.merchants;
+          final allMerchants = [...existingMerchants, ...response.data];
+          emit(
+            MerchantsLoaded(
+              allMerchants,
+              meta: response.meta,
+              links: response.links,
+              hasMore: hasMore,
+            ),
+          );
+        } else {
+          emit(
+            MerchantsLoaded(
+              response.data,
+              meta: response.meta,
+              links: response.links,
+              hasMore: hasMore,
+            ),
+          );
+        }
+      } else {
+        emit(
+          MerchantsLoaded(
+            response.data,
+            meta: response.meta,
+            links: response.links,
+            hasMore: hasMore,
+          ),
+        );
+      }
     } catch (e) {
       emit(MerchantsError(e.toString()));
+    }
+  }
+
+  Future<void> loadMoreMerchants() async {
+    final currentState = state;
+    if (currentState is MerchantsLoaded && currentState.hasMore) {
+      final nextPage = (currentState.meta?.currentPage ?? 1) + 1;
+      await loadMerchants(page: nextPage, loadMore: true);
     }
   }
 

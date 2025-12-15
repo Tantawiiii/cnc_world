@@ -13,13 +13,74 @@ class DesignCubit extends Cubit<DesignState> {
 
   DesignCubit(this._repository) : super(DesignInitial());
 
-  Future<void> loadDesigns({int? page}) async {
-    emit(DesignsLoading());
+  Future<void> loadDesigns({int page = 1, bool loadMore = false}) async {
+    if (!loadMore) {
+      emit(DesignsLoading());
+    } else {
+      final currentState = state;
+      if (currentState is DesignsLoaded) {
+        emit(
+          DesignsLoadingMore(
+            currentState.designs,
+            meta: currentState.meta,
+            links: currentState.links,
+            hasMore: currentState.hasMore,
+          ),
+        );
+      } else {
+        emit(DesignsLoading());
+      }
+    }
+
     try {
       final response = await _repository.getDesigns(page: page);
-      emit(DesignsLoaded(response.data));
+      final hasMore =
+          response.meta != null &&
+          response.meta!.currentPage < response.meta!.lastPage;
+
+      if (loadMore) {
+        final currentState = state;
+        if (currentState is DesignsLoaded) {
+          final existingDesigns = currentState.designs;
+          final allDesigns = [...existingDesigns, ...response.data];
+          emit(
+            DesignsLoaded(
+              allDesigns,
+              meta: response.meta,
+              links: response.links,
+              hasMore: hasMore,
+            ),
+          );
+        } else {
+          emit(
+            DesignsLoaded(
+              response.data,
+              meta: response.meta,
+              links: response.links,
+              hasMore: hasMore,
+            ),
+          );
+        }
+      } else {
+        emit(
+          DesignsLoaded(
+            response.data,
+            meta: response.meta,
+            links: response.links,
+            hasMore: hasMore,
+          ),
+        );
+      }
     } catch (e) {
       emit(DesignsError(e.toString()));
+    }
+  }
+
+  Future<void> loadMoreDesigns() async {
+    final currentState = state;
+    if (currentState is DesignsLoaded && currentState.hasMore) {
+      final nextPage = (currentState.meta?.currentPage ?? 1) + 1;
+      await loadDesigns(page: nextPage, loadMore: true);
     }
   }
 
@@ -60,8 +121,15 @@ class DesignCubit extends Cubit<DesignState> {
   Future<void> downloadDesign(Design design) async {
     final currentState = state;
     List<Design> currentDesigns = [];
+    DesignsMeta? meta;
+    DesignsLinks? links;
+    bool hasMore = false;
+
     if (currentState is DesignsLoaded) {
       currentDesigns = currentState.designs;
+      meta = currentState.meta;
+      links = currentState.links;
+      hasMore = currentState.hasMore;
     } else if (currentState is DesignDownloading) {
       currentDesigns = currentState.designs;
     } else if (currentState is DesignDownloaded) {
@@ -70,7 +138,16 @@ class DesignCubit extends Cubit<DesignState> {
       currentDesigns = currentState.designs;
     }
 
-    emit(DesignDownloading(currentDesigns, design.id, isFile: false));
+    emit(
+      DesignDownloading(
+        currentDesigns,
+        design.id,
+        isFile: false,
+        meta: meta,
+        links: links,
+        hasMore: hasMore,
+      ),
+    );
     try {
       final imageUrl = design.imageUrlString;
       if (imageUrl.isEmpty) {
@@ -135,6 +212,9 @@ class DesignCubit extends Cubit<DesignState> {
               design.id,
               savedPath,
               isFile: false,
+              meta: meta,
+              links: links,
+              hasMore: hasMore,
             ),
           );
         } else {
@@ -152,6 +232,9 @@ class DesignCubit extends Cubit<DesignState> {
           design.id,
           e.toString(),
           isFile: false,
+          meta: meta,
+          links: links,
+          hasMore: hasMore,
         ),
       );
     }
@@ -160,17 +243,42 @@ class DesignCubit extends Cubit<DesignState> {
   Future<void> downloadFile(Design design) async {
     final currentState = state;
     List<Design> currentDesigns = [];
+    DesignsMeta? meta;
+    DesignsLinks? links;
+    bool hasMore = false;
+
     if (currentState is DesignsLoaded) {
       currentDesigns = currentState.designs;
+      meta = currentState.meta;
+      links = currentState.links;
+      hasMore = currentState.hasMore;
     } else if (currentState is DesignDownloading) {
       currentDesigns = currentState.designs;
+      meta = currentState.meta;
+      links = currentState.links;
+      hasMore = currentState.hasMore;
     } else if (currentState is DesignDownloaded) {
       currentDesigns = currentState.designs;
+      meta = currentState.meta;
+      links = currentState.links;
+      hasMore = currentState.hasMore;
     } else if (currentState is DesignDownloadError) {
       currentDesigns = currentState.designs;
+      meta = currentState.meta;
+      links = currentState.links;
+      hasMore = currentState.hasMore;
     }
 
-    emit(DesignDownloading(currentDesigns, design.id, isFile: true));
+    emit(
+      DesignDownloading(
+        currentDesigns,
+        design.id,
+        isFile: true,
+        meta: meta,
+        links: links,
+        hasMore: hasMore,
+      ),
+    );
     try {
       final fileUrl = design.fileUrlString;
       if (fileUrl.isEmpty) {
@@ -209,7 +317,15 @@ class DesignCubit extends Cubit<DesignState> {
       final file = File(savePath);
       if (await file.exists()) {
         emit(
-          DesignDownloaded(currentDesigns, design.id, savePath, isFile: true),
+          DesignDownloaded(
+            currentDesigns,
+            design.id,
+            savePath,
+            isFile: true,
+            meta: meta,
+            links: links,
+            hasMore: hasMore,
+          ),
         );
       } else {
         throw Exception('الملف غير موجود بعد التنزيل');
@@ -221,6 +337,9 @@ class DesignCubit extends Cubit<DesignState> {
           design.id,
           e.toString(),
           isFile: true,
+          meta: meta,
+          links: links,
+          hasMore: hasMore,
         ),
       );
     }

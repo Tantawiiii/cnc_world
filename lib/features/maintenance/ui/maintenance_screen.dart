@@ -71,15 +71,6 @@ class _MaintenanceScreenState extends State<MaintenanceScreen> {
 
   void _submitMaintenance() {
     if (!_formKey.currentState!.validate()) return;
-    if (_selectedEngineer == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppTexts.engineerRequired),
-          backgroundColor: AppColors.error,
-        ),
-      );
-      return;
-    }
     if (_imageId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -92,7 +83,7 @@ class _MaintenanceScreenState extends State<MaintenanceScreen> {
 
     final request = MaintenanceRequest(
       problemDetails: _problemDetailsController.text.trim(),
-      engineerId: _selectedEngineer!.id,
+      engineerId: _selectedEngineer?.id,
       assignedBy: 'user',
       image: _imageId!,
     );

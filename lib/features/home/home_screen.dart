@@ -30,7 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Create cubits once and keep them alive
+
     _homeCubit = HomeCubit()..loadSliders();
     _contactCubit = ContactCubit(ContactRepository());
     _complaintCubit = ContactCubit(ContactRepository());

@@ -97,8 +97,10 @@ class Seller {
 
 class SellersListResponse {
   final List<Seller> data;
+  final SellersLinks? links;
+  final SellersMeta? meta;
 
-  SellersListResponse({required this.data});
+  SellersListResponse({required this.data, this.links, this.meta});
 
   factory SellersListResponse.fromJson(Map<String, dynamic> json) {
     final dataList = json['data'] as List<dynamic>? ?? [];
@@ -106,6 +108,60 @@ class SellersListResponse {
       data: dataList
           .map((item) => Seller.fromJson(item as Map<String, dynamic>))
           .toList(),
+      links: json['links'] != null
+          ? SellersLinks.fromJson(json['links'])
+          : null,
+      meta: json['meta'] != null ? SellersMeta.fromJson(json['meta']) : null,
+    );
+  }
+}
+
+class SellersLinks {
+  final String? first;
+  final String? last;
+  final String? prev;
+  final String? next;
+
+  SellersLinks({this.first, this.last, this.prev, this.next});
+
+  factory SellersLinks.fromJson(Map<String, dynamic> json) {
+    return SellersLinks(
+      first: json['first'],
+      last: json['last'],
+      prev: json['prev'],
+      next: json['next'],
+    );
+  }
+}
+
+class SellersMeta {
+  final int currentPage;
+  final int from;
+  final int lastPage;
+  final String path;
+  final int perPage;
+  final int to;
+  final int total;
+
+  SellersMeta({
+    required this.currentPage,
+    required this.from,
+    required this.lastPage,
+    required this.path,
+    required this.perPage,
+    required this.to,
+    required this.total,
+  });
+
+  factory SellersMeta.fromJson(Map<String, dynamic> json) {
+    return SellersMeta(
+      currentPage: json['current_page'] ?? 1,
+      from: json['from'] ?? 1,
+      lastPage: json['last_page'] ?? 1,
+      path: json['path'] ?? '',
+      perPage: json['per_page'] ?? 15,
+      to: json['to'] ?? 1,
+      total: json['total'] ?? 0,
     );
   }
 }

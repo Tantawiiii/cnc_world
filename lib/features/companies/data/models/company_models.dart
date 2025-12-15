@@ -138,8 +138,10 @@ class Company {
 
 class CompaniesListResponse {
   final List<Company> data;
+  final CompaniesLinks? links;
+  final CompaniesMeta? meta;
 
-  CompaniesListResponse({required this.data});
+  CompaniesListResponse({required this.data, this.links, this.meta});
 
   factory CompaniesListResponse.fromJson(Map<String, dynamic> json) {
     final dataList = json['data'] as List<dynamic>? ?? [];
@@ -147,6 +149,60 @@ class CompaniesListResponse {
       data: dataList
           .map((item) => Company.fromJson(item as Map<String, dynamic>))
           .toList(),
+      links: json['links'] != null
+          ? CompaniesLinks.fromJson(json['links'])
+          : null,
+      meta: json['meta'] != null ? CompaniesMeta.fromJson(json['meta']) : null,
+    );
+  }
+}
+
+class CompaniesLinks {
+  final String? first;
+  final String? last;
+  final String? prev;
+  final String? next;
+
+  CompaniesLinks({this.first, this.last, this.prev, this.next});
+
+  factory CompaniesLinks.fromJson(Map<String, dynamic> json) {
+    return CompaniesLinks(
+      first: json['first'],
+      last: json['last'],
+      prev: json['prev'],
+      next: json['next'],
+    );
+  }
+}
+
+class CompaniesMeta {
+  final int currentPage;
+  final int from;
+  final int lastPage;
+  final String path;
+  final int perPage;
+  final int to;
+  final int total;
+
+  CompaniesMeta({
+    required this.currentPage,
+    required this.from,
+    required this.lastPage,
+    required this.path,
+    required this.perPage,
+    required this.to,
+    required this.total,
+  });
+
+  factory CompaniesMeta.fromJson(Map<String, dynamic> json) {
+    return CompaniesMeta(
+      currentPage: json['current_page'] ?? 1,
+      from: json['from'] ?? 1,
+      lastPage: json['last_page'] ?? 1,
+      path: json['path'] ?? '',
+      perPage: json['per_page'] ?? 15,
+      to: json['to'] ?? 1,
+      total: json['total'] ?? 0,
     );
   }
 }

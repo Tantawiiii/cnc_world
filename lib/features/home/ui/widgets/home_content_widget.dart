@@ -55,7 +55,6 @@ class _HomeContentWidgetState extends State<HomeContentWidget>
         }
       });
     } else {
-      // If already animated, set to completed state immediately
       _categoriesAnimationController.value = 1.0;
     }
   }
@@ -277,7 +276,6 @@ class _HomeContentWidgetState extends State<HomeContentWidget>
   List<CategoryItem> _getCategories(BuildContext context) {
     final currentLocale = Localizations.localeOf(context);
 
-    // Check if we need to rebuild categories (locale changed)
     if (_cachedCategories == null || _cachedLocale != currentLocale) {
       final localizations = AppLocalizations.of(context);
       _cachedCategories = [
@@ -413,8 +411,6 @@ class _HomeContentWidgetState extends State<HomeContentWidget>
                 child: CategoryCardWidget(
                   category: category,
                   onTap: () {
-                    // Use route directly from category - no need to compare strings
-                    // This completely avoids any rebuild when navigating
                     Navigator.of(context).pushNamed(category.route);
                   },
                 ),

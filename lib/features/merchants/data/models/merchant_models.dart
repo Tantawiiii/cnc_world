@@ -91,8 +91,10 @@ class Merchant {
 
 class MerchantsListResponse {
   final List<Merchant> data;
+  final MerchantsLinks? links;
+  final MerchantsMeta? meta;
 
-  MerchantsListResponse({required this.data});
+  MerchantsListResponse({required this.data, this.links, this.meta});
 
   factory MerchantsListResponse.fromJson(Map<String, dynamic> json) {
     final dataList = json['data'] as List<dynamic>? ?? [];
@@ -100,6 +102,60 @@ class MerchantsListResponse {
       data: dataList
           .map((item) => Merchant.fromJson(item as Map<String, dynamic>))
           .toList(),
+      links: json['links'] != null
+          ? MerchantsLinks.fromJson(json['links'])
+          : null,
+      meta: json['meta'] != null ? MerchantsMeta.fromJson(json['meta']) : null,
+    );
+  }
+}
+
+class MerchantsLinks {
+  final String? first;
+  final String? last;
+  final String? prev;
+  final String? next;
+
+  MerchantsLinks({this.first, this.last, this.prev, this.next});
+
+  factory MerchantsLinks.fromJson(Map<String, dynamic> json) {
+    return MerchantsLinks(
+      first: json['first'],
+      last: json['last'],
+      prev: json['prev'],
+      next: json['next'],
+    );
+  }
+}
+
+class MerchantsMeta {
+  final int currentPage;
+  final int from;
+  final int lastPage;
+  final String path;
+  final int perPage;
+  final int to;
+  final int total;
+
+  MerchantsMeta({
+    required this.currentPage,
+    required this.from,
+    required this.lastPage,
+    required this.path,
+    required this.perPage,
+    required this.to,
+    required this.total,
+  });
+
+  factory MerchantsMeta.fromJson(Map<String, dynamic> json) {
+    return MerchantsMeta(
+      currentPage: json['current_page'] ?? 1,
+      from: json['from'] ?? 1,
+      lastPage: json['last_page'] ?? 1,
+      path: json['path'] ?? '',
+      perPage: json['per_page'] ?? 15,
+      to: json['to'] ?? 1,
+      total: json['total'] ?? 0,
     );
   }
 }
