@@ -215,7 +215,6 @@ class _RegisterScreenState extends State<RegisterScreen>
   }
 
   Future<void> _pickImage(BuildContext context) async {
-    // Prevent multiple simultaneous image picks
     if (_isPickingImage || _isUploadingImage) {
       return;
     }
@@ -285,7 +284,6 @@ class _RegisterScreenState extends State<RegisterScreen>
         return;
       }
 
-      // Use stored country and state names
       final countryName = _selectedCountryName;
       final stateName = _selectedStateName;
 
@@ -796,59 +794,59 @@ class _RegisterScreenState extends State<RegisterScreen>
                                     );
                                     return Column(
                                       children: [
-                                        AppDropdown<String>(
-                                          hint:
-                                              localizations?.country ??
-                                              AppTexts.country,
-                                          value: _selectedCountry,
-                                          leadingIcon: Icons.public_outlined,
-                                          items: _countries.map((country) {
-                                            return DropdownMenuItem<String>(
-                                              value: country['id'].toString(),
-                                              child: Text(
-                                                country['name'] as String? ??
-                                                    '',
-                                              ),
-                                            );
-                                          }).toList(),
-                                          onChanged: (value) {
-                                            setState(() {
-                                              _selectedCountry = value;
-                                              if (value != null) {
-                                                final country = _countries
-                                                    .firstWhere(
-                                                      (c) =>
-                                                          c['id'].toString() ==
-                                                          value,
-                                                      orElse: () =>
-                                                          _countries.isNotEmpty
-                                                          ? _countries.first
-                                                          : {},
-                                                    );
-                                                _selectedCountryName =
-                                                    country['name'] as String?;
-                                              }
-                                              _selectedState = null;
-                                              _selectedStateName = null;
-                                              _selectedCity = null;
-                                            });
-                                            if (value != null) {
-                                              _loadStates(value);
-                                            }
-                                          },
-                                          validator: _needsAddress()
-                                              ? (value) {
-                                                  if (value == null ||
-                                                      value.isEmpty) {
-                                                    return localizations
-                                                            ?.countryRequired ??
-                                                        AppTexts
-                                                            .countryRequired;
-                                                  }
-                                                  return null;
-                                                }
-                                              : null,
-                                        ),
+                                        // AppDropdown<String>(
+                                        //   hint:
+                                        //       localizations?.country ??
+                                        //       AppTexts.country,
+                                        //   value: _selectedCountry,
+                                        //   leadingIcon: Icons.public_outlined,
+                                        //   items: _countries.map((country) {
+                                        //     return DropdownMenuItem<String>(
+                                        //       value: country['id'].toString(),
+                                        //       child: Text(
+                                        //         country['name'] as String? ??
+                                        //             '',
+                                        //       ),
+                                        //     );
+                                        //   }).toList(),
+                                        //   onChanged: (value) {
+                                        //     setState(() {
+                                        //       _selectedCountry = value;
+                                        //       if (value != null) {
+                                        //         final country = _countries
+                                        //             .firstWhere(
+                                        //               (c) =>
+                                        //                   c['id'].toString() ==
+                                        //                   value,
+                                        //               orElse: () =>
+                                        //                   _countries.isNotEmpty
+                                        //                   ? _countries.first
+                                        //                   : {},
+                                        //             );
+                                        //         _selectedCountryName =
+                                        //             country['name'] as String?;
+                                        //       }
+                                        //       _selectedState = null;
+                                        //       _selectedStateName = null;
+                                        //       _selectedCity = null;
+                                        //     });
+                                        //     if (value != null) {
+                                        //       _loadStates(value);
+                                        //     }
+                                        //   },
+                                        //   validator: _needsAddress()
+                                        //       ? (value) {
+                                        //           if (value == null ||
+                                        //               value.isEmpty) {
+                                        //             return localizations
+                                        //                     ?.countryRequired ??
+                                        //                 AppTexts
+                                        //                     .countryRequired;
+                                        //           }
+                                        //           return null;
+                                        //         }
+                                        //       : null,
+                                        // ),
                                         if (_selectedCountry != null &&
                                             _states.isNotEmpty) ...[
                                           SizedBox(height: 12.h),

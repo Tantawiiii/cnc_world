@@ -2,21 +2,25 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
+import 'package:flutter/foundation.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'api_constants.dart';
 import '../services/storage_service.dart';
 
+import '../services/connectivity_service.dart';
+
 class DioClient {
-  DioClient({required StorageService storageService})
-    : _storageService = storageService {
-
-
+  DioClient({
+    required StorageService storageService,
+    required ConnectivityService connectivityService,
+  }) : _storageService = storageService,
+       _connectivityService = connectivityService {
     _dio = Dio(
       BaseOptions(
         baseUrl: ApiConstants.baseUrl,
-        connectTimeout: const Duration(seconds: 60),
-        receiveTimeout: const Duration(minutes: 5), // Increased for video uploads
-        sendTimeout: const Duration(minutes: 5), // Increased for video uploads
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(minutes: 2),
+        sendTimeout: const Duration(minutes: 2),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -27,12 +31,11 @@ class DioClient {
       ),
     );
 
-    // Configure HTTP adapter for better compatibility in release builds
     if (_dio.httpClientAdapter is IOHttpClientAdapter) {
       (_dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
         final client = HttpClient();
         client.badCertificateCallback = (cert, host, port) => false;
-        client.connectionTimeout = const Duration(seconds: 60);
+        client.connectionTimeout = const Duration(seconds: 30);
         return client;
       };
     }
@@ -42,20 +45,35 @@ class DioClient {
 
   late final Dio _dio;
   final StorageService _storageService;
+  final ConnectivityService _connectivityService;
 
   void _setupInterceptors() {
-
     _dio.interceptors.add(
-      PrettyDioLogger(
-        requestHeader: true,
-        requestBody: true,
-        responseBody: true,
-        responseHeader: true,
-        error: true,
-        compact: true,
-        maxWidth: 90,
+      InterceptorsWrapper(
+        onError: (DioException e, handler) {
+          if (e.type == DioExceptionType.connectionError ||
+              e.type == DioExceptionType.connectionTimeout ||
+              e.error is SocketException) {
+            _connectivityService.setDisconnected();
+          }
+          return handler.next(e);
+        },
       ),
     );
+
+    if (kDebugMode) {
+      _dio.interceptors.add(
+        PrettyDioLogger(
+          requestHeader: true,
+          requestBody: true,
+          responseBody: true,
+          responseHeader: true,
+          error: true,
+          compact: true,
+          maxWidth: 90,
+        ),
+      );
+    }
   }
 
   Dio get dio => _dio;

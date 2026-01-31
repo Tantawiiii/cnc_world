@@ -16,7 +16,7 @@ class HomeCubit extends Cubit<HomeState> {
 
     try {
       final response = await _sliderRepository.getSliders();
-      // Filter only active sliders with valid image URLs
+
       final activeSliders = response.data
           .where(
             (slider) =>

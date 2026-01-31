@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'core/constant/app_texts.dart';
 import 'core/di/inject.dart' as di;
@@ -11,6 +12,8 @@ import 'core/routing/app_router.dart';
 import 'core/routing/app_routes.dart';
 import 'core/services/storage_service.dart';
 import 'core/theme/app_theme.dart';
+import 'features/connectivity/logic/connectivity_cubit.dart';
+import 'shared/widgets/no_internet_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -73,20 +76,37 @@ class _MyAppState extends State<MyApp> {
       designSize: const Size(375, 812),
       minTextAdapt: true,
       builder: (_, child) {
-        return MaterialApp(
-          title: AppTexts.appTitle,
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.lightTheme,
-          locale: _locale,
-          supportedLocales: const [Locale('ar', 'SA'), Locale('en', 'US')],
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-          ],
-          onGenerateRoute: onGenerateAppRoute,
-          initialRoute: AppRoutes.splash,
+        return BlocProvider(
+          create: (context) => di.sl<ConnectivityCubit>(),
+          child: BlocBuilder<ConnectivityCubit, ConnectivityState>(
+            builder: (context, state) {
+              return MaterialApp(
+                title: AppTexts.appTitle,
+                debugShowCheckedModeBanner: false,
+                theme: AppTheme.lightTheme,
+                locale: _locale,
+                supportedLocales: const [Locale('ar', 'SA'), Locale('en', 'US')],
+                localizationsDelegates: const [
+                  AppLocalizations.delegate,
+                  GlobalMaterialLocalizations.delegate,
+                  GlobalCupertinoLocalizations.delegate,
+                  GlobalWidgetsLocalizations.delegate,
+                ],
+                onGenerateRoute: onGenerateAppRoute,
+                initialRoute: AppRoutes.splash,
+                builder: (context, child) {
+                  return Stack(
+                    children: [
+                      child!,
+                      if (state == ConnectivityState.disconnected ||
+                          state == ConnectivityState.checking)
+                        const NoInternetScreen(),
+                    ],
+                  );
+                },
+              );
+            },
+          ),
         );
       },
     );

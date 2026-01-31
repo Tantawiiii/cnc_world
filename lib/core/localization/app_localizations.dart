@@ -70,7 +70,7 @@ class AppLocalizations {
       // Roles
       'roleUser': 'مستخدم',
       'roleEngineer': 'مهندس',
-      'roleSeller': 'بائع',
+      'roleSeller': 'صاحب الورشه',
       'roleMerchant': 'تاجر',
 
       // Register Fields

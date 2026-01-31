@@ -269,7 +269,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     return FadeTransition(
       opacity: _fadeAnimation,
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 18.w),
+        padding: EdgeInsets.symmetric(horizontal: 14.w),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -347,7 +347,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 pageData.title,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 24.sp,
+                  fontSize: 22.sp,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textPrimary,
                   height: 1.3,
@@ -362,8 +362,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 pageData.description,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w700,
                   color: AppColors.textSecondary,
                   height: 1,
                 ),

@@ -374,13 +374,13 @@ class _MaintenanceScreenState extends State<MaintenanceScreen> {
                             color: AppColors.textPrimary,
                           ),
                         ),
-                        Text(
-                          engineer.phone,
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
+                        // Text(
+                        //   engineer.phone,
+                        //   style: TextStyle(
+                        //     fontSize: 12.sp,
+                        //     color: AppColors.textSecondary,
+                        //   ),
+                        // ),
                       ],
                     ),
                   ),

@@ -8,6 +8,7 @@ import 'dart:math' as math;
 import '../../../core/constant/app_colors.dart';
 import '../../../core/constant/app_texts.dart';
 import '../../../core/localization/app_localizations.dart';
+import '../../../core/network/api_constants.dart';
 import '../../../core/routing/app_routes.dart';
 import '../cubit/used_machine_cubit.dart';
 import '../cubit/used_machine_state.dart';
@@ -402,7 +403,7 @@ class UsedMachinesListScreen extends StatelessWidget {
           return previewUrl;
         }
         // Handle malformed URLs that might contain http:// in the middle
-        // e.g., "/storage/http://procnctech.dentin.cloud/images/file-type-video.svg"
+        // e.g., "/storage/http://.../images/file-type-video.svg"
         final httpIndex = previewUrl.indexOf('http://');
         if (httpIndex > 0) {
           return previewUrl.substring(httpIndex);
@@ -412,10 +413,11 @@ class UsedMachinesListScreen extends StatelessWidget {
           return previewUrl.substring(httpsIndex);
         }
         // If it's relative, construct full URL
+        final base = ApiConstants.mediaBaseUrl;
         if (previewUrl.startsWith('/')) {
-          return 'http://procnctech.dentin.cloud$previewUrl';
+          return '$base$previewUrl';
         }
-        return 'http://procnctech.dentin.cloud/$previewUrl';
+        return '$base/$previewUrl';
       }
     }
     // For images or if no previewUrl, use the regular imageUrl

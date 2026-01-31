@@ -70,7 +70,7 @@ final class AppTexts {
   // Roles
   static const String roleUser = 'مستخدم';
   static const String roleEngineer = 'مهندس';
-  static const String roleSeller = 'بائع';
+  static const String roleSeller = 'صاحب الورشه';
   static const String roleMerchant = 'تاجر';
 
   // Register Fields

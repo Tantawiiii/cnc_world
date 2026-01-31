@@ -42,9 +42,14 @@ class _AppDropdownState<T> extends State<AppDropdown<T>> {
           return InputDecorator(
             decoration: InputDecoration(
               hintText: widget.hint,
-              hintStyle: TextStyle(color: AppColors.textTertiary, fontSize: 15.sp),
+              hintStyle: TextStyle(
+                color: AppColors.textTertiary,
+                fontSize: 15.sp,
+              ),
               filled: true,
-              fillColor: _isFocused ? AppColors.surface : AppColors.surfaceVariant,
+              fillColor: _isFocused
+                  ? AppColors.surface
+                  : AppColors.surfaceVariant,
               contentPadding: EdgeInsets.symmetric(
                 horizontal: 16.w,
                 vertical: 16.h,
@@ -60,9 +65,7 @@ class _AppDropdownState<T> extends State<AppDropdown<T>> {
                     ),
               suffixIcon: Icon(
                 Icons.arrow_drop_down,
-                color: _isFocused
-                    ? AppColors.primary
-                    : AppColors.textSecondary,
+                color: _isFocused ? AppColors.primary : AppColors.textSecondary,
                 size: 24.sp,
               ),
               enabledBorder: OutlineInputBorder(
@@ -70,8 +73,8 @@ class _AppDropdownState<T> extends State<AppDropdown<T>> {
                   color: field.hasError
                       ? AppColors.error
                       : (_isFocused
-                          ? AppColors.primary.withOpacity(0.3)
-                          : AppColors.border),
+                            ? AppColors.primary.withOpacity(0.3)
+                            : AppColors.border),
                   width: 1.5,
                 ),
                 borderRadius: BorderRadius.circular(14.r),
@@ -112,6 +115,31 @@ class _AppDropdownState<T> extends State<AppDropdown<T>> {
                 ),
                 icon: const SizedBox.shrink(),
                 dropdownColor: AppColors.surface,
+                menuMaxHeight: 300.h,
+                itemHeight: 56.h,
+                selectedItemBuilder: (BuildContext context) {
+                  return widget.items.map<Widget>((DropdownMenuItem<T> item) {
+                    final child = item.child;
+                    if (child is Text) {
+                      return Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Text(
+                          child.data ?? '',
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      );
+                    }
+                    return Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: child,
+                    );
+                  }).toList();
+                },
               ),
             ),
           );
@@ -120,4 +148,3 @@ class _AppDropdownState<T> extends State<AppDropdown<T>> {
     );
   }
 }
-

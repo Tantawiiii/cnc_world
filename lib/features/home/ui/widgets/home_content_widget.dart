@@ -30,6 +30,7 @@ class _HomeContentWidgetState extends State<HomeContentWidget>
   bool _hasAnimated = false;
   List<CategoryItem>? _cachedCategories;
   Locale? _cachedLocale;
+  String? _cachedRole;
 
   @override
   bool get wantKeepAlive => true;
@@ -275,10 +276,17 @@ class _HomeContentWidgetState extends State<HomeContentWidget>
 
   List<CategoryItem> _getCategories(BuildContext context) {
     final currentLocale = Localizations.localeOf(context);
+    final userData = _storageService.getUserData();
+    final role = (userData != null ? (userData['role'] ?? '') : '')
+        .toString()
+        .toLowerCase();
 
-    if (_cachedCategories == null || _cachedLocale != currentLocale) {
+    if (_cachedCategories == null ||
+        _cachedLocale != currentLocale ||
+        _cachedRole != role) {
       final localizations = AppLocalizations.of(context);
-      _cachedCategories = [
+      // القايمة الكاملة
+      List<CategoryItem> allCategories = [
         CategoryItem(
           title:
               localizations?.homeCategoryMaintenance ??
@@ -328,7 +336,22 @@ class _HomeContentWidgetState extends State<HomeContentWidget>
           route: AppRoutes.sellers,
         ),
       ];
+
+      if (role == 'user') {
+        allCategories = allCategories.where((item) {
+          return item.route != AppRoutes.maintenance &&
+              item.route != AppRoutes.designs;
+        }).toList();
+      } else if (role == 'engineer') {
+        allCategories = allCategories.where((item) {
+          return item.route != AppRoutes.usedMachines &&
+              item.route != AppRoutes.sellers;
+        }).toList();
+      }
+
+      _cachedCategories = allCategories;
       _cachedLocale = currentLocale;
+      _cachedRole = role;
     }
 
     return _cachedCategories!;

@@ -77,16 +77,6 @@ class _SliderSectionWidgetState extends State<SliderSectionWidget> {
     });
   }
 
-  String _getSliderImageUrl(SliderItem slider) {
-    if (slider.imageUrl != null && slider.imageUrl!.isNotEmpty) {
-      return slider.imageUrl!;
-    }
-    if (slider.image?.fullUrl != null && slider.image!.fullUrl.isNotEmpty) {
-      return slider.image!.fullUrl;
-    }
-    return '';
-  }
-
   Widget _buildSliderIndicator(bool isActive) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -153,7 +143,7 @@ class _SliderSectionWidgetState extends State<SliderSectionWidget> {
                     fit: StackFit.expand,
                     children: [
                       CachedNetworkImage(
-                        imageUrl: _getSliderImageUrl(slider),
+                        imageUrl: slider.imageUrlString,
                         fit: BoxFit.cover,
                         placeholder: (context, url) =>
                             _buildShimmerPlaceholder(),

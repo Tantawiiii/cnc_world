@@ -40,4 +40,46 @@ class SliderItem {
       image: json['image'] != null ? ImageData.fromJson(json['image']) : null,
     );
   }
+
+  String get imageUrlString {
+    final direct = _cleanUrl(imageUrl);
+    if (direct.isNotEmpty) return direct;
+
+    final full = _cleanUrl(image?.fullUrl);
+    if (full.isNotEmpty) return full;
+
+    return '';
+  }
+
+  String _cleanUrl(String? url) {
+    if (url == null) return '';
+
+    final trimmed = url.trim().replaceAll('\n', '').replaceAll('\r', '');
+    if (trimmed.isEmpty) return '';
+
+    try {
+      Uri? uri = Uri.tryParse(trimmed);
+      if (uri == null) return '';
+
+      // توحيد الـ scheme ومسار الرابط
+      final scheme = (uri.scheme.isEmpty || uri.scheme == 'http')
+          ? 'https'
+          : uri.scheme;
+      final cleanPath = uri.path.replaceAll(RegExp(r'/+'), '/');
+
+      uri = Uri(
+        scheme: scheme,
+        userInfo: uri.userInfo,
+        host: uri.host,
+        port: uri.hasPort ? uri.port : null,
+        path: cleanPath.startsWith('/') ? cleanPath : '/$cleanPath',
+        query: uri.hasQuery ? uri.query : null,
+        fragment: uri.fragment.isNotEmpty ? uri.fragment : null,
+      );
+
+      return uri.toString();
+    } catch (_) {
+      return trimmed.replaceAll(RegExp(r'/+'), '/');
+    }
+  }
 }
