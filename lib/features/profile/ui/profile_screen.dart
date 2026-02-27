@@ -6,6 +6,9 @@ import 'package:shimmer/shimmer.dart';
 
 import '../../../core/constant/app_colors.dart';
 import '../../../core/constant/app_texts.dart';
+import '../../../core/di/inject.dart' as di;
+import '../../../core/routing/app_routes.dart';
+import '../../../core/services/storage_service.dart';
 import '../cubit/profile_cubit.dart';
 import '../cubit/profile_state.dart';
 import '../data/models/profile_models.dart';
@@ -477,6 +480,26 @@ class ProfileScreen extends StatelessWidget {
 
                     SizedBox(height: 24.h),
                   ],
+
+                  // Delete account button
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                    child: TextButton.icon(
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.error,
+                      ),
+                      onPressed: () => _showDeleteAccountDialog(context),
+                      icon: Icon(Icons.delete_outline),
+                      label: Text(
+                        AppTexts.deleteAccount,
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 24.h),
                 ],
               ),
             ),
@@ -680,8 +703,76 @@ class ProfileScreen extends StatelessWidget {
         return AppColors.textSecondary;
     }
   }
+
+  Future<void> _handleDeleteAccount(BuildContext context) async {
+    final storageService = di.sl<StorageService>();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        );
+      },
+    );
+
+    try {
+      await context.read<ProfileCubit>().deleteAccount();
+      Navigator.of(context).pop(); // close loading
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(AppTexts.deleteAccountSuccess)),
+      );
+
+      // Clear all stored auth data
+      await storageService.clearAll();
+
+      if (context.mounted) {
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
+      }
+    } catch (e) {
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e.toString().replaceFirst(
+              'Exception: ',
+              AppTexts.deleteAccountError,
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
+  void _showDeleteAccountDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text(AppTexts.deleteAccountConfirmationTitle),
+          content: const Text(AppTexts.deleteAccountConfirmationMessage),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text(AppTexts.cancel),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                _handleDeleteAccount(context);
+              },
+              child: const Text(
+                AppTexts.deleteAccount,
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
-
-
-
-

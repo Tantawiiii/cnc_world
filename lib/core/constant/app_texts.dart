@@ -189,6 +189,14 @@ final class AppTexts {
   static const String adminAssignedMessage = 'يتم محاسبه المهندس باجر رمزي';
   static const String assignedBy = 'تم التعيين بواسطة';
 
+  // Account
+  static const String deleteAccount = 'حذف الحساب';
+  static const String deleteAccountConfirmationTitle = 'حذف الحساب';
+  static const String deleteAccountConfirmationMessage =
+      'هل أنت متأكد من رغبتك في حذف حسابك؟ هذا الإجراء لا يمكن التراجع عنه.';
+  static const String deleteAccountSuccess = 'تم حذف الحساب بنجاح';
+  static const String deleteAccountError = 'فشل حذف الحساب';
+
   // Used Machines Disclaimer
   static const String usedMachinesDisclaimer =
       'الابليكشن مسؤول بالكامل عن معاينه ونقل وتركيب والتدريب علي الماكينه';

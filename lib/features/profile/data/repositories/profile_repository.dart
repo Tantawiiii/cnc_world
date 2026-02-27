@@ -24,4 +24,23 @@ class ProfileRepository {
       rethrow;
     }
   }
+
+  Future<void> deleteAccount() async {
+    try {
+      final response = await _apiService.get('/api/user/delete-account');
+
+      if (response.statusCode != null &&
+          response.statusCode! >= 200 &&
+          response.statusCode! < 300) {
+        return;
+      } else {
+        final errorMessage = response.data is Map
+            ? response.data['message'] ?? 'Failed to delete account'
+            : 'Failed to delete account';
+        throw Exception(errorMessage);
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
 }
