@@ -191,7 +191,6 @@ class ProfileScreen extends StatelessWidget {
 
                   SizedBox(height: 24.h),
 
-                  // Profile Header Card with Image
                   TweenAnimationBuilder<double>(
                     tween: Tween(begin: 0.0, end: 1.0),
                     duration: const Duration(milliseconds: 800),
