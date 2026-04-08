@@ -6,6 +6,8 @@ import '../../core/constant/app_colors.dart';
 import '../../core/di/inject.dart' as di;
 import '../../core/routing/app_routes.dart';
 import '../../core/services/storage_service.dart';
+import '../../core/services/remote_config_service.dart';
+import 'app_blocked_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -91,7 +93,7 @@ class _SplashScreenState extends State<SplashScreen>
       if (status == AnimationStatus.completed) {
         Future.delayed(const Duration(milliseconds: 500), () {
           if (mounted) {
-            _checkAuthAndNavigate();
+            _checkAppStatusAndNavigate();
           }
         });
       }
@@ -100,7 +102,19 @@ class _SplashScreenState extends State<SplashScreen>
     _mainController.forward();
   }
 
-  void _checkAuthAndNavigate() {
+  Future<void> _checkAppStatusAndNavigate() async {
+    final remoteConfig = di.sl<RemoteConfigService>();
+    final isAllowed = remoteConfig.isAppWorking();
+
+    if (!mounted) return;
+
+    if (!isAllowed) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const AppBlockedScreen()),
+      );
+      return;
+    }
+
     final token = _storageService.getToken();
     if (token != null && token.isNotEmpty) {
       Navigator.of(context).pushReplacementNamed(AppRoutes.home);

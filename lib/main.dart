@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -13,10 +14,17 @@ import 'core/routing/app_routes.dart';
 import 'core/services/storage_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/connectivity/logic/connectivity_cubit.dart';
+import 'core/services/remote_config_service.dart';
+import 'firebase_options.dart';
 import 'shared/widgets/no_internet_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
@@ -29,6 +37,9 @@ void main() async {
   if (token != null) {
     dioClient.setAuthToken(token);
   }
+
+  // Initialize Remote Config
+  await di.sl<RemoteConfigService>().init();
 
   runApp(const MyApp());
 }

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "803932545786",
+    "project_id": "cnc-world-2535f",
+    "storage_bucket": "cnc-world-2535f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:803932545786:android:ee76857664a93e095f1f43",
+        "android_client_info": {
+          "package_name": "com.tantawii.cnc_world"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAQeY-ILL88_UJK_LIUug5JoVhbQ8v1c9E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
