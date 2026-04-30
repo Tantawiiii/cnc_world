@@ -10,5 +10,7 @@ final class AppAssets {
   static const String cncUsedMachines = "assets/used_machines.png";
   static const String cncWorkshops= "assets/Workshops.png";
   static const String cncmachen= "assets/machen.png";
+  static const String cncEngineers = "assets/engineers.png";
+  static const String cncEmergency = "assets/emergency.png";
 
 }

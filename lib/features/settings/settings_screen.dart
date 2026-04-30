@@ -6,12 +6,10 @@ import 'package:shimmer/shimmer.dart';
 
 import '../../core/constant/app_colors.dart';
 import '../../core/constant/app_texts.dart';
-import '../../core/localization/app_language.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../core/routing/app_routes.dart';
 import '../../core/di/inject.dart';
 import '../../core/services/storage_service.dart';
-import '../../main.dart';
 import '../../shared/widgets/curved_bottom_nav_bar.dart';
 import '../profile/cubit/profile_cubit.dart';
 import '../profile/cubit/profile_state.dart';
@@ -208,6 +206,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           SizedBox(height: 24.h),
           _buildLanguageCard(),
           SizedBox(height: 24.h),
+          _buildInformationCards(context),
+          SizedBox(height: 24.h),
 
           // if (profile.role == 'user') ...[
           //   Text(
@@ -245,8 +245,114 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // ],
           _buildLanguageCard(),
           SizedBox(height: 24.h),
+          _buildInformationCards(context),
+          SizedBox(height: 24.h),
           _buildLogoutCard(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildInformationCards(BuildContext context) {
+    return Column(
+      children: [
+        _buildNavigationCard(
+          title: AppTexts.termsConditions,
+          subtitle: AppTexts.termsConditionsSubtitle,
+          icon: Icons.description_outlined,
+          color: AppColors.info,
+          onTap: () =>
+              Navigator.of(context).pushNamed(AppRoutes.termsConditions),
+        ),
+        SizedBox(height: 12.h),
+        _buildNavigationCard(
+          title: AppTexts.refundPolicy,
+          subtitle: AppTexts.refundPolicySubtitle,
+          icon: Icons.receipt_long_outlined,
+          color: AppColors.warning,
+          onTap: () => Navigator.of(context).pushNamed(AppRoutes.refundPolicy),
+        ),
+        SizedBox(height: 12.h),
+        _buildNavigationCard(
+          title: AppTexts.securityPolicy,
+          subtitle: AppTexts.securityPolicySubtitle,
+          icon: Icons.shield_outlined,
+          color: AppColors.success,
+          onTap: () => Navigator.of(context).pushNamed(AppRoutes.security),
+        ),
+        SizedBox(height: 12.h),
+        _buildNavigationCard(
+          title: AppTexts.contactUs,
+          subtitle: AppTexts.contactInfoSubtitle,
+          icon: Icons.support_agent_outlined,
+          color: AppColors.primaryDark,
+          onTap: () => Navigator.of(context).pushNamed(AppRoutes.contactInfo),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNavigationCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16.r),
+        child: Container(
+          padding: EdgeInsets.all(18.w),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16.r),
+            border: Border.all(color: color.withAlpha(45), width: 1),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(10.w),
+                decoration: BoxDecoration(
+                  color: color.withAlpha(25),
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: Icon(icon, color: color, size: 22.sp),
+              ),
+              SizedBox(width: 14.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 17.sp,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios,
+                color: AppColors.textTertiary,
+                size: 16.sp,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -375,263 +481,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildProfileCard(UserProfile profile) {
-    return Container(
-      padding: EdgeInsets.all(20.w),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadowLight,
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              if (profile.imageUrl != null && profile.imageUrl!.isNotEmpty)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12.r),
-                  child: CachedNetworkImage(
-                    imageUrl: profile.imageUrl!,
-                    width: 80.w,
-                    height: 80.h,
-                    fit: BoxFit.cover,
-                    errorWidget: (context, url, error) => Container(
-                      width: 80.w,
-                      height: 80.h,
-                      color: AppColors.surfaceVariant,
-                      child: Icon(
-                        Icons.person,
-                        color: AppColors.textSecondary,
-                        size: 40.sp,
-                      ),
-                    ),
-                  ),
-                )
-              else
-                Container(
-                  width: 80.w,
-                  height: 80.h,
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceVariant,
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  child: Icon(
-                    Icons.person,
-                    color: AppColors.textSecondary,
-                    size: 40.sp,
-                  ),
-                ),
-              SizedBox(width: 16.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      profile.name,
-                      style: TextStyle(
-                        fontSize: 20.sp,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    SizedBox(height: 4.h),
-                    Text(
-                      profile.phone,
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    if (profile.address.isNotEmpty ||
-                        profile.city.isNotEmpty ||
-                        profile.state.isNotEmpty) ...[
-                      SizedBox(height: 4.h),
-                      Text(
-                        '${profile.address.isNotEmpty ? profile.address : ''}${profile.address.isNotEmpty && profile.city.isNotEmpty ? ', ' : ''}${profile.city.isNotEmpty ? profile.city : ''}${(profile.address.isNotEmpty || profile.city.isNotEmpty) && profile.state.isNotEmpty ? ', ' : ''}${profile.state.isNotEmpty ? profile.state : ''}',
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: AppColors.textTertiary,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMaintenanceCard(Maintenance maintenance) {
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadowLight,
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Status Badge
-          Row(
-            children: [
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: _getStatusColor(maintenance.status).withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                child: Text(
-                  maintenance.status,
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w600,
-                    color: _getStatusColor(maintenance.status),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12.h),
-
-          // Problem Details
-          Text(
-            maintenance.problemDetails,
-            style: TextStyle(fontSize: 14.sp, color: AppColors.textPrimary),
-          ),
-          SizedBox(height: 12.h),
-
-          // Warning/Message based on assigned_by
-          if (maintenance.assignedBy == 'user')
-            Container(
-              padding: EdgeInsets.all(12.w),
-              decoration: BoxDecoration(
-                color: AppColors.warning.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8.r),
-                border: Border.all(
-                  color: AppColors.warning.withOpacity(0.3),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.warning_amber_rounded,
-                    color: AppColors.warning,
-                    size: 20.sp,
-                  ),
-                  SizedBox(width: 8.w),
-                  Expanded(
-                    child: Text(
-                      AppTexts.userAssignedWarning,
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: AppColors.warning,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            )
-          else if (maintenance.assignedBy == 'Admin')
-            Container(
-              padding: EdgeInsets.all(12.w),
-              decoration: BoxDecoration(
-                color: AppColors.info.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8.r),
-                border: Border.all(
-                  color: AppColors.info.withOpacity(0.3),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.info_outline, color: AppColors.info, size: 20.sp),
-                  SizedBox(width: 8.w),
-                  Expanded(
-                    child: Text(
-                      AppTexts.adminAssignedMessage,
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: AppColors.info,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-          SizedBox(height: 12.h),
-
-          // Image if available
-          if (maintenance.imageUrlString.isNotEmpty)
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8.r),
-              child: CachedNetworkImage(
-                imageUrl: maintenance.imageUrlString,
-                width: double.infinity,
-                height: 150.h,
-                fit: BoxFit.cover,
-                errorWidget: (context, url, error) => Container(
-                  height: 150.h,
-                  color: AppColors.surfaceVariant,
-                  child: Icon(
-                    Icons.image_not_supported,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ),
-            ),
-
-          SizedBox(height: 12.h),
-
-          // Created Date
-          Text(
-            '${AppTexts.createdAt}: ${maintenance.createdAt}',
-            style: TextStyle(fontSize: 12.sp, color: AppColors.textTertiary),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'pending':
-        return AppColors.warning;
-      case 'completed':
-        return AppColors.success;
-      case 'in_progress':
-        return AppColors.info;
-      default:
-        return AppColors.textSecondary;
-    }
-  }
-
   Widget _buildLanguageCard() {
     final localizations = AppLocalizations.of(context);
-    final currentLocale = Localizations.localeOf(context);
-    final currentLanguage = appLanguageFromLocale(currentLocale);
 
     return Card(
       elevation: 2,
@@ -684,49 +535,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLanguageOption(
-    BuildContext context,
-    AppLanguage language,
-    String label,
-    bool isSelected,
-  ) {
-    return InkWell(
-      onTap: () {
-        final appState = MyApp.of(context);
-        if (appState != null) {
-          appState.setLocale(language.locale);
-        }
-      },
-      borderRadius: BorderRadius.circular(12.r),
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
-        decoration: BoxDecoration(
-          gradient: isSelected ? AppColors.primaryGradient : null,
-          color: isSelected ? null : AppColors.surfaceVariant,
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.primary
-                : AppColors.border.withOpacity(0.3),
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w600,
-              color: isSelected
-                  ? AppColors.textOnPrimary
-                  : AppColors.textPrimary,
-            ),
-          ),
         ),
       ),
     );

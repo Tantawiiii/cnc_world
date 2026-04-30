@@ -11,6 +11,7 @@ import '../cubit/company_cubit.dart';
 import '../cubit/company_state.dart';
 import '../data/models/company_models.dart';
 import '../data/repositories/company_repository.dart';
+import '../../../core/widgets/add_comment_widget.dart';
 
 class CompanyDetailScreen extends StatelessWidget {
   final int companyId;
@@ -294,6 +295,25 @@ class CompanyDetailScreen extends StatelessWidget {
                                     ),
                                   ),
                                   SizedBox(height: 20.h),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.star,
+                                        color: AppColors.warning,
+                                        size: 18.sp,
+                                      ),
+                                      SizedBox(width: 6.w),
+                                      Text(
+                                        '${company.rating.toStringAsFixed(1)} (${company.totalReviews} ${AppTexts.reviews})',
+                                        style: TextStyle(
+                                          fontSize: 14.sp,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 20.h),
 
                                   // Company Description
                                   if (company
@@ -457,6 +477,98 @@ class CompanyDetailScreen extends StatelessWidget {
                                       ),
                                     ),
                                   ],
+
+                                  SizedBox(height: 20.h),
+                                  Divider(color: AppColors.border),
+                                  SizedBox(height: 20.h),
+                                  Text(
+                                    AppTexts.comments,
+                                    style: TextStyle(
+                                      fontSize: 16.sp,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  SizedBox(height: 12.h),
+                                  AddCommentWidget(
+                                    commentableUserId: company.id,
+                                    onCommentAdded: () {
+                                      context.read<CompanyCubit>().loadCompanyDetail(companyId);
+                                    },
+                                  ),
+                                  SizedBox(height: 16.h),
+                                  if (company.comments.isEmpty)
+                                    Text(
+                                      AppTexts.noCommentsAvailable,
+                                      style: TextStyle(
+                                        fontSize: 14.sp,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    )
+                                  else
+                                    ...company.comments.map(
+                                      (comment) => Container(
+                                        margin: EdgeInsets.only(bottom: 10.h),
+                                        padding: EdgeInsets.all(12.w),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.surfaceVariant,
+                                          borderRadius: BorderRadius.circular(12.r),
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: Text(
+                                                    comment.user.name,
+                                                    style: TextStyle(
+                                                      fontSize: 14.sp,
+                                                      fontWeight: FontWeight.w700,
+                                                      color:
+                                                          AppColors.textPrimary,
+                                                    ),
+                                                  ),
+                                                ),
+                                                Icon(
+                                                  Icons.star,
+                                                  size: 14.sp,
+                                                  color: AppColors.warning,
+                                                ),
+                                                SizedBox(width: 4.w),
+                                                Text(
+                                                  comment.rate
+                                                      .toStringAsFixed(1),
+                                                  style: TextStyle(
+                                                    fontSize: 12.sp,
+                                                    color:
+                                                        AppColors.textSecondary,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            SizedBox(height: 6.h),
+                                            Text(
+                                              comment.comment,
+                                              style: TextStyle(
+                                                fontSize: 14.sp,
+                                                color: AppColors.textSecondary,
+                                                height: 1.4,
+                                              ),
+                                            ),
+                                            SizedBox(height: 6.h),
+                                            Text(
+                                              comment.createdAt,
+                                              style: TextStyle(
+                                                fontSize: 12.sp,
+                                                color: AppColors.textTertiary,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
 
                                   // Products Section
                                   if (company.products.isNotEmpty) ...[

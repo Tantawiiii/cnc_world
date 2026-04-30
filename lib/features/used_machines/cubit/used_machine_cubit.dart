@@ -13,9 +13,9 @@ class UsedMachineCubit extends Cubit<UsedMachineState> {
     emit(UsedMachinesLoading());
     try {
       final response = await _repository.getUsedMachines();
-      emit(UsedMachinesLoaded(response.data));
+      if (!isClosed) emit(UsedMachinesLoaded(response.data));
     } catch (e) {
-      emit(UsedMachinesError(e.toString()));
+      if (!isClosed) emit(UsedMachinesError(e.toString()));
     }
   }
 
@@ -23,9 +23,9 @@ class UsedMachineCubit extends Cubit<UsedMachineState> {
     emit(UsedMachineDetailLoading());
     try {
       final response = await _repository.getUsedMachineDetail(id);
-      emit(UsedMachineDetailLoaded(response.data));
+      if (!isClosed) emit(UsedMachineDetailLoaded(response.data));
     } catch (e) {
-      emit(UsedMachineDetailError(e.toString()));
+      if (!isClosed) emit(UsedMachineDetailError(e.toString()));
     }
   }
 
@@ -37,15 +37,15 @@ class UsedMachineCubit extends Cubit<UsedMachineState> {
         onSendProgress: (sent, total) {
           final progress = sent / total;
           // Only emit progress if less than 0.99 to avoid overriding ImageUploaded
-          if (progress < 0.99) {
+          if (progress < 0.99 && !isClosed) {
             emit(ImageUploading(progress: progress));
           }
         },
       );
       // Ensure we emit ImageUploaded after upload completes
-      emit(ImageUploaded(response.data.id));
+      if (!isClosed) emit(ImageUploaded(response.data.id));
     } catch (e) {
-      emit(ImageUploadError(e.toString()));
+      if (!isClosed) emit(ImageUploadError(e.toString()));
     }
   }
 
@@ -53,9 +53,9 @@ class UsedMachineCubit extends Cubit<UsedMachineState> {
     emit(AddingUsedMachine());
     try {
       final response = await _repository.addUsedMachine(request);
-      emit(UsedMachineAdded(response));
+      if (!isClosed) emit(UsedMachineAdded(response));
     } catch (e) {
-      emit(AddUsedMachineError(e.toString()));
+      if (!isClosed) emit(AddUsedMachineError(e.toString()));
     }
   }
 }

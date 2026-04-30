@@ -13,12 +13,14 @@ class LoginResponse {
   final String message;
   final String type;
   final String token;
+  final String? firebaseCustomToken;
   final UserData data;
 
   LoginResponse({
     required this.message,
     required this.type,
     required this.token,
+    this.firebaseCustomToken,
     required this.data,
   });
 
@@ -27,6 +29,12 @@ class LoginResponse {
       message: json['message'] ?? '',
       type: json['type'] ?? '',
       token: json['token'] ?? '',
+      firebaseCustomToken:
+          (json['firebase_custom_token'] ??
+                  json['firebaseToken'] ??
+                  json['firebase_token'] ??
+                  json['custom_token'])
+              ?.toString(),
       data: UserData.fromJson(json['data'] ?? {}),
     );
   }
@@ -36,6 +44,7 @@ class LoginResponse {
       'message': message,
       'type': type,
       'token': token,
+      'firebase_custom_token': firebaseCustomToken,
       'data': data.toJson(),
     };
   }

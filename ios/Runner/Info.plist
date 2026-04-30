@@ -53,5 +53,7 @@
 	<string>This app saves CNC-related images and designs to your photo library.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>This app uses the microphone when recording videos.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>نستخدم موقعك لعرض أقرب الورش وتحديث عنوانك على الخريطة.</string>
 </dict>
 </plist>

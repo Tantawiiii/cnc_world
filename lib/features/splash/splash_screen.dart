@@ -7,6 +7,7 @@ import '../../core/di/inject.dart' as di;
 import '../../core/routing/app_routes.dart';
 import '../../core/services/storage_service.dart';
 import '../../core/services/remote_config_service.dart';
+import '../../core/services/post_splash_session_service.dart';
 import 'app_blocked_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -117,7 +118,15 @@ class _SplashScreenState extends State<SplashScreen>
 
     final token = _storageService.getToken();
     if (token != null && token.isNotEmpty) {
-      Navigator.of(context).pushReplacementNamed(AppRoutes.home);
+      final sessionOk =
+          await PostSplashSessionService()
+              .validateTokenSyncLocationAndNearestSeller();
+      if (!mounted) return;
+      if (sessionOk) {
+        Navigator.of(context).pushReplacementNamed(AppRoutes.home);
+      } else {
+        Navigator.of(context).pushReplacementNamed(AppRoutes.onboarding);
+      }
     } else {
       Navigator.of(context).pushReplacementNamed(AppRoutes.onboarding);
     }

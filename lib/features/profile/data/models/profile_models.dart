@@ -97,6 +97,12 @@ class UserProfile {
   final String? imageUrl;
   final dynamic image;
   final List<Maintenance> maintenances;
+  final String? lat;
+  final String? lng;
+  final String? workshopName;
+  final String? natureOfWork;
+  final double rating;
+  final int totalReviews;
 
   UserProfile({
     required this.id,
@@ -112,27 +118,67 @@ class UserProfile {
     this.imageUrl,
     this.image,
     required this.maintenances,
+    this.lat,
+    this.lng,
+    this.workshopName,
+    this.natureOfWork,
+    this.rating = 0,
+    this.totalReviews = 0,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     final maintenancesList = json['maintenances'] as List<dynamic>? ?? [];
+    final ratingRaw = json['rating'];
     return UserProfile(
       id: json['id'] ?? 0,
       name: json['name'] ?? '',
-      address: json['address'] ?? '',
-      city: json['city'] ?? '',
-      state: json['state'] ?? '',
+      address: json['address']?.toString() ?? '',
+      city: json['city']?.toString() ?? '',
+      state: json['state']?.toString() ?? '',
       role: json['role'] ?? '',
       phone: json['phone'] ?? '',
       active: json['active'] ?? false,
-      createdAt: json['createdAt'] ?? '',
-      updatedAt: json['updatedAt'] ?? '',
-      imageUrl: json['imageUrl'],
+      createdAt: json['createdAt']?.toString() ?? '',
+      updatedAt: json['updatedAt']?.toString() ?? '',
+      imageUrl: json['imageUrl']?.toString(),
       image: json['image'],
       maintenances: maintenancesList
           .map((item) => Maintenance.fromJson(item as Map<String, dynamic>))
           .toList(),
+      lat: json['lat']?.toString(),
+      lng: json['lng']?.toString(),
+      workshopName: json['workshop_name']?.toString(),
+      natureOfWork: json['nature_of_work']?.toString(),
+      rating: ratingRaw is num
+          ? ratingRaw.toDouble()
+          : double.tryParse(ratingRaw?.toString() ?? '') ?? 0,
+      totalReviews: json['total_reviews'] is int
+          ? json['total_reviews'] as int
+          : int.tryParse(json['total_reviews']?.toString() ?? '') ?? 0,
     );
+  }
+
+  Map<String, dynamic> toStorageJson() {
+    return {
+      'id': id,
+      'name': name,
+      'phone': phone,
+      'role': role,
+      'address': address,
+      'city': city,
+      'state': state,
+      'active': active,
+      'createdAt': createdAt,
+      'updatedAt': updatedAt,
+      'imageUrl': imageUrl,
+      'image': image is Map<String, dynamic> ? image : null,
+      'lat': lat,
+      'lng': lng,
+      'workshop_name': workshopName,
+      'nature_of_work': natureOfWork,
+      'rating': rating,
+      'total_reviews': totalReviews,
+    };
   }
 }
 

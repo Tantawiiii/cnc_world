@@ -18,4 +18,7 @@ final class ApiConstants {
   static const String mediaUpload = '/api/media';
   static const String getSlider = '/api/get-slider';
   static const String contactUs = '/api/contact-us-public';
+  static const String addComment = '/api/comments';
+  static const String checkAuth = '/api/check-auth';
+  static const String updateLocation = '/api/update-location';
 }

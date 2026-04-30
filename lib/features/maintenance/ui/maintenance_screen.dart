@@ -9,8 +9,12 @@ import '../../../core/constant/app_texts.dart';
 import '../../../core/extensions/image_picker_extension.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/primary_button.dart';
+import '../../engineers/cubit/engineer_cubit.dart';
+import '../../engineers/cubit/engineer_state.dart';
+import '../../engineers/data/models/engineer_models.dart' as engineer_models;
+import '../../engineers/data/repositories/engineer_repository.dart';
 import '../cubit/maintenance_cubit.dart';
-import '../cubit/maintenance_state.dart';
+import '../cubit/maintenance_state.dart' hide EngineersLoaded, EngineersError;
 import '../data/models/maintenance_models.dart';
 
 class MaintenanceScreen extends StatefulWidget {
@@ -24,20 +28,16 @@ class _MaintenanceScreenState extends State<MaintenanceScreen> {
   final _formKey = GlobalKey<FormState>();
   final _problemDetailsController = TextEditingController();
 
-  Engineer? _selectedEngineer;
+  engineer_models.Engineer? _selectedEngineer;
   File? _selectedMedia;
   MediaType? _mediaType;
   int? _imageId;
   bool _isUploadingImage = false;
   double _uploadProgress = 0.0;
-  List<Engineer> _engineers = [];
-  bool _isLoadingEngineers = true;
-  String? _engineersError;
 
   @override
   void initState() {
     super.initState();
-    context.read<MaintenanceCubit>().loadEngineers();
   }
 
   @override
@@ -93,162 +93,155 @@ class _MaintenanceScreenState extends State<MaintenanceScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        body: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [AppColors.background, AppColors.backgroundLight],
+    return BlocProvider(
+      create: (_) => EngineerCubit(EngineerRepository())..loadEngineers(),
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [AppColors.background, AppColors.backgroundLight],
+              ),
             ),
-          ),
-          child: SafeArea(
-            child: BlocListener<MaintenanceCubit, MaintenanceState>(
-              listener: (context, state) {
-                if (state is EngineersLoaded) {
-                  setState(() {
-                    _engineers = state.engineers;
-                    _isLoadingEngineers = false;
-                  });
-                } else if (state is EngineersError) {
-                  setState(() {
-                    _isLoadingEngineers = false;
-                    _engineersError = state.message;
-                  });
-                } else if (state is ImageUploading) {
-                  setState(() {
-                    _isUploadingImage = true;
-                    _uploadProgress = (state as ImageUploading).progress;
-                  });
-                } else if (state is ImageUploaded) {
-                  setState(() {
-                    _imageId = state.imageId;
-                    _isUploadingImage = false;
-                    _uploadProgress = 1.0;
-                  });
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(AppTexts.imageUploadSuccess),
-                      backgroundColor: AppColors.success,
-                    ),
-                  );
-                } else if (state is ImageUploadError) {
-                  setState(() {
-                    _isUploadingImage = false;
-                    _uploadProgress = 0.0;
-                  });
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(state.message),
-                      backgroundColor: AppColors.error,
-                    ),
-                  );
-                } else if (state is MaintenanceSubmitted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(AppTexts.maintenanceSuccess),
-                      backgroundColor: AppColors.success,
-                    ),
-                  );
-                  Navigator.of(context).pop();
-                } else if (state is MaintenanceSubmitError) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(state.message),
-                      backgroundColor: AppColors.error,
-                    ),
-                  );
-                }
-              },
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(16.w),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: Icon(
-                              Icons.arrow_back_ios,
-                              color: AppColors.textPrimary,
-                            ),
-                            onPressed: () => Navigator.of(context).pop(),
-                          ),
-                          Expanded(
-                            child: Text(
-                              AppTexts.maintenanceTitle,
-                              style: TextStyle(
-                                fontSize: 22.sp,
-                                fontWeight: FontWeight.w800,
+            child: SafeArea(
+              child: BlocListener<MaintenanceCubit, MaintenanceState>(
+                listener: (context, state) {
+                  if (state is ImageUploading) {
+                    setState(() {
+                      _isUploadingImage = true;
+                      _uploadProgress = state.progress;
+                    });
+                  } else if (state is ImageUploaded) {
+                    setState(() {
+                      _imageId = state.imageId;
+                      _isUploadingImage = false;
+                      _uploadProgress = 1.0;
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(AppTexts.imageUploadSuccess),
+                        backgroundColor: AppColors.success,
+                      ),
+                    );
+                  } else if (state is ImageUploadError) {
+                    setState(() {
+                      _isUploadingImage = false;
+                      _uploadProgress = 0.0;
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(state.message),
+                        backgroundColor: AppColors.error,
+                      ),
+                    );
+                  } else if (state is MaintenanceSubmitted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(AppTexts.maintenanceSuccess),
+                        backgroundColor: AppColors.success,
+                      ),
+                    );
+                    Navigator.of(context).pop();
+                  } else if (state is MaintenanceSubmitError) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(state.message),
+                        backgroundColor: AppColors.error,
+                      ),
+                    );
+                  }
+                },
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.all(16.w),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                Icons.arrow_back_ios,
                                 color: AppColors.textPrimary,
                               ),
+                              onPressed: () => Navigator.of(context).pop(),
                             ),
+                            Expanded(
+                              child: Text(
+                                AppTexts.maintenanceTitle,
+                                style: TextStyle(
+                                  fontSize: 22.sp,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16.h),
+
+                        Text(
+                          AppTexts.problemDetails,
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
                           ),
-                        ],
-                      ),
-                      SizedBox(height: 16.h),
-
-                      Text(
-                        AppTexts.problemDetails,
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
                         ),
-                      ),
-                      SizedBox(height: 12.h),
-                      AppTextField(
-                        controller: _problemDetailsController,
-                        hint: AppTexts.problemDetailsHint,
-                        maxLines: 5,
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return AppTexts.problemDetailsRequired;
-                          }
-                          return null;
-                        },
-                      ),
-                      SizedBox(height: 24.h),
-
-                      Text(
-                        AppTexts.selectEngineer,
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
+                        SizedBox(height: 12.h),
+                        AppTextField(
+                          controller: _problemDetailsController,
+                          hint: AppTexts.problemDetailsHint,
+                          maxLines: 5,
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return AppTexts.problemDetailsRequired;
+                            }
+                            return null;
+                          },
                         ),
-                      ),
-                      SizedBox(height: 12.h),
-                      _buildEngineerDropdownWidget(),
-                      SizedBox(height: 24.h),
+                        SizedBox(height: 24.h),
 
-                      Text(
-                        AppTexts.uploadProblemImage,
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
+                        Text(
+                          AppTexts.selectEngineer,
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 12.h),
-                      _buildImageUploadSection(),
-                      SizedBox(height: 32.h),
+                        SizedBox(height: 12.h),
+                        _buildEngineerDropdownWidget(),
+                        SizedBox(height: 24.h),
 
-                      BlocBuilder<MaintenanceCubit, MaintenanceState>(
-                        builder: (context, state) {
-                          final isSubmitting = state is MaintenanceSubmitting;
-                          return PrimaryButton(
-                            title: AppTexts.submitMaintenance,
-                            onPressed: isSubmitting ? null : _submitMaintenance,
-                            isLoading: isSubmitting,
-                          );
-                        },
-                      ),
-                    ],
+                        Text(
+                          AppTexts.uploadProblemImage,
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        SizedBox(height: 12.h),
+                        _buildImageUploadSection(),
+                        SizedBox(height: 32.h),
+
+                        BlocBuilder<MaintenanceCubit, MaintenanceState>(
+                          builder: (context, state) {
+                            final isSubmitting = state is MaintenanceSubmitting;
+                            return PrimaryButton(
+                              title: AppTexts.submitMaintenance,
+                              onPressed: isSubmitting ? null : _submitMaintenance,
+                              isLoading: isSubmitting,
+                            );
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -260,67 +253,80 @@ class _MaintenanceScreenState extends State<MaintenanceScreen> {
   }
 
   Widget _buildEngineerDropdownWidget() {
-    if (_isLoadingEngineers) {
-      return Container(
-        padding: EdgeInsets.all(16.w),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceVariant,
-          borderRadius: BorderRadius.circular(14.r),
-        ),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 20.w,
-              height: 20.h,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: AppColors.primary,
-              ),
+    return BlocBuilder<EngineerCubit, EngineerState>(
+      builder: (context, state) {
+        final isLoading = state is EngineersLoading && state is! EngineersLoadingMore;
+        final errorState = state is EngineersError ? state : null;
+        final engineers = state is EngineersLoaded
+            ? state.engineers
+            : <engineer_models.Engineer>[];
+
+        if (isLoading) {
+          return Container(
+            padding: EdgeInsets.all(16.w),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceVariant,
+              borderRadius: BorderRadius.circular(14.r),
             ),
-            SizedBox(width: 12.w),
-            Text(
-              AppTexts.loadingEngineers,
-              style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 20.w,
+                  height: 20.h,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.primary,
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                Text(
+                  AppTexts.loadingEngineers,
+                  style: TextStyle(fontSize: 14.sp, color: AppColors.textSecondary),
+                ),
+              ],
             ),
-          ],
-        ),
-      );
-    }
+          );
+        }
 
-    if (_engineersError != null) {
-      return Container(
-        padding: EdgeInsets.all(16.w),
-        decoration: BoxDecoration(
-          color: AppColors.error.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(14.r),
-          border: Border.all(color: AppColors.error, width: 1),
-        ),
-        child: Text(
-          _engineersError!,
-          style: TextStyle(fontSize: 14.sp, color: AppColors.error),
-        ),
-      );
-    }
+        if (errorState != null) {
+          return Container(
+            padding: EdgeInsets.all(16.w),
+            decoration: BoxDecoration(
+              color: AppColors.error.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(14.r),
+              border: Border.all(color: AppColors.error, width: 1),
+            ),
+            child: Text(
+              errorState.message,
+              style: TextStyle(fontSize: 14.sp, color: AppColors.error),
+            ),
+          );
+        }
 
-    if (_engineers.isEmpty) {
-      return Container(
-        padding: EdgeInsets.all(16.w),
-        decoration: BoxDecoration(
-          color: AppColors.warning.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(14.r),
-          border: Border.all(color: AppColors.warning, width: 1),
-        ),
-        child: Text(
-          AppTexts.noEngineersAvailable,
-          style: TextStyle(fontSize: 14.sp, color: AppColors.warning),
-        ),
-      );
-    }
+        if (engineers.isEmpty) {
+          return Container(
+            padding: EdgeInsets.all(16.w),
+            decoration: BoxDecoration(
+              color: AppColors.warning.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(14.r),
+              border: Border.all(color: AppColors.warning, width: 1),
+            ),
+            child: Text(
+              AppTexts.noEngineersAvailable,
+              style: TextStyle(fontSize: 14.sp, color: AppColors.warning),
+            ),
+          );
+        }
 
-    return _buildEngineerDropdown(_engineers);
+        return _buildEngineerPicker(context, engineers);
+      },
+    );
   }
 
-  Widget _buildEngineerDropdown(List<Engineer> engineers) {
+  Widget _buildEngineerPicker(
+    BuildContext providerContext,
+    List<engineer_models.Engineer> engineers,
+  ) {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -332,67 +338,244 @@ class _MaintenanceScreenState extends State<MaintenanceScreen> {
           width: _selectedEngineer != null ? 2 : 1.5,
         ),
       ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<Engineer>(
-          value: _selectedEngineer,
-          isExpanded: true,
-          padding: EdgeInsets.symmetric(horizontal: 16.w),
-          icon: Icon(Icons.keyboard_arrow_down, color: AppColors.textSecondary),
-          hint: Text(
-            AppTexts.selectEngineer,
-            style: TextStyle(color: AppColors.textTertiary, fontSize: 15.sp),
-          ),
-          items: engineers.map((engineer) {
-            return DropdownMenuItem<Engineer>(
-              value: engineer,
-              child: Row(
-                children: [
-                  Container(
-                    width: 40.w,
-                    height: 40.h,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.person,
-                      color: AppColors.primary,
-                      size: 20.sp,
-                    ),
-                  ),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          engineer.name,
-                          style: TextStyle(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
-                          ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14.r),
+        onTap: () => _showEngineerSelectionSheet(providerContext),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+          child: Row(
+            children: [
+              Icon(Icons.engineering, color: AppColors.primary, size: 20.sp),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: _selectedEngineer == null
+                    ? Text(
+                        AppTexts.selectEngineer,
+                        style: TextStyle(
+                          color: AppColors.textTertiary,
+                          fontSize: 15.sp,
                         ),
-                        // Text(
-                        //   engineer.phone,
-                        //   style: TextStyle(
-                        //     fontSize: 12.sp,
-                        //     color: AppColors.textSecondary,
-                        //   ),
-                        // ),
-                      ],
-                    ),
-                  ),
-                ],
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _selectedEngineer!.name,
+                            style: TextStyle(
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          SizedBox(height: 2.h),
+                          Text(
+                            '${_selectedEngineer!.rating.toStringAsFixed(1)} ${AppTexts.reviews} (${_selectedEngineer!.totalReviews})',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
               ),
-            );
-          }).toList(),
-          onChanged: (Engineer? engineer) {
-            setState(() => _selectedEngineer = engineer);
-          },
+              Icon(Icons.keyboard_arrow_down, color: AppColors.textSecondary),
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  Future<void> _showEngineerSelectionSheet(BuildContext providerContext) async {
+    final engineerCubit = providerContext.read<EngineerCubit>();
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        String query = '';
+        return BlocProvider.value(
+          value: engineerCubit,
+          child: StatefulBuilder(
+            builder: (context, setModalState) {
+              return Container(
+                height: MediaQuery.of(context).size.height * 0.75,
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(22.r)),
+                ),
+                child: Column(
+                  children: [
+                    SizedBox(height: 10.h),
+                    Container(
+                      width: 40.w,
+                      height: 4.h,
+                      decoration: BoxDecoration(
+                        color: AppColors.border,
+                        borderRadius: BorderRadius.circular(10.r),
+                      ),
+                    ),
+                    SizedBox(height: 14.h),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      child: TextField(
+                        onChanged: (value) {
+                          setModalState(() => query = value.trim().toLowerCase());
+                        },
+                        decoration: InputDecoration(
+                          hintText: '${AppTexts.selectEngineer}...',
+                          prefixIcon: const Icon(Icons.search),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 10.h),
+                    Expanded(
+                      child: BlocBuilder<EngineerCubit, EngineerState>(
+                        builder: (context, state) {
+                          final allEngineers = state is EngineersLoaded
+                              ? state.engineers
+                              : <engineer_models.Engineer>[];
+                          final hasMore = state is EngineersLoaded && state.hasMore;
+                          final isLoadingMore = state is EngineersLoadingMore;
+
+                          final filtered = allEngineers.where((engineer) {
+                            if (query.isEmpty) return true;
+                            return engineer.name.toLowerCase().contains(query) ||
+                                engineer.phone.toLowerCase().contains(query);
+                          }).toList();
+
+                          return NotificationListener<ScrollNotification>(
+                            onNotification: (notification) {
+                              if (notification.metrics.pixels >=
+                                      notification.metrics.maxScrollExtent * 0.8 &&
+                                  hasMore &&
+                                  !isLoadingMore) {
+                                context.read<EngineerCubit>().loadMoreEngineers();
+                              }
+                              return false;
+                            },
+                            child: ListView.separated(
+                              padding: EdgeInsets.symmetric(horizontal: 16.w),
+                              itemCount: filtered.length + (hasMore ? 1 : 0),
+                              separatorBuilder: (_, __) => SizedBox(height: 8.h),
+                              itemBuilder: (context, index) {
+                                if (index >= filtered.length) {
+                                  return Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 10.h),
+                                    child: Center(
+                                      child: CircularProgressIndicator(
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  );
+                                }
+
+                                final engineer = filtered[index];
+                                final isSelected = _selectedEngineer?.id == engineer.id;
+
+                                return Material(
+                                  color: isSelected
+                                      ? AppColors.primary.withValues(alpha: 0.1)
+                                      : AppColors.surface,
+                                  borderRadius: BorderRadius.circular(12.r),
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(12.r),
+                                    onTap: () {
+                                      setState(() => _selectedEngineer = engineer);
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: Padding(
+                                      padding: EdgeInsets.all(12.w),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.person,
+                                            color: AppColors.primary,
+                                            size: 20.sp,
+                                          ),
+                                          SizedBox(width: 10.w),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  engineer.name,
+                                                  style: TextStyle(
+                                                    fontSize: 14.sp,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: AppColors.textPrimary,
+                                                  ),
+                                                ),
+                                                SizedBox(height: 4.h),
+                                                Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.star,
+                                                      size: 13.sp,
+                                                      color: AppColors.warning,
+                                                    ),
+                                                    SizedBox(width: 4.w),
+                                                    Text(
+                                                      '${engineer.rating.toStringAsFixed(1)} (${engineer.totalReviews})',
+                                                      style: TextStyle(
+                                                        fontSize: 12.sp,
+                                                        color: AppColors.textSecondary,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  if (query.isNotEmpty)
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 10.h),
+                      child: Builder(
+                        builder: (context) {
+                          final state = context.watch<EngineerCubit>().state;
+                          final allEngineers = state is EngineersLoaded
+                              ? state.engineers
+                              : <engineer_models.Engineer>[];
+                          final hasMatch = allEngineers.any(
+                            (engineer) =>
+                                engineer.name.toLowerCase().contains(query) ||
+                                engineer.phone.toLowerCase().contains(query),
+                          );
+                          if (hasMatch) return const SizedBox.shrink();
+                          return Text(
+                            AppTexts.noEngineersAvailable,
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              color: AppColors.textSecondary,
+                            ),
+                            textAlign: TextAlign.center,
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
@@ -446,7 +629,7 @@ class _MaintenanceScreenState extends State<MaintenanceScreen> {
                   if (_isUploadingImage)
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.7),
+                        color: Colors.black.withValues(alpha: 0.7),
                         borderRadius: BorderRadius.circular(16.r),
                       ),
                       child: Center(

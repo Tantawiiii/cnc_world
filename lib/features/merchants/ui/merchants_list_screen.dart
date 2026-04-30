@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
-import 'dart:math' as math;
 
 import '../../../core/constant/app_colors.dart';
 import '../../../core/constant/app_texts.dart';
@@ -11,7 +10,6 @@ import '../../../core/routing/app_routes.dart';
 import '../cubit/merchant_cubit.dart';
 import '../cubit/merchant_state.dart';
 import '../data/models/merchant_models.dart';
-import '../data/repositories/merchant_repository.dart';
 
 class MerchantsListScreen extends StatefulWidget {
   const MerchantsListScreen({super.key});
@@ -22,7 +20,9 @@ class MerchantsListScreen extends StatefulWidget {
 
 class _MerchantsListScreenState extends State<MerchantsListScreen> {
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
   bool _isLoadingMore = false;
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -34,16 +34,17 @@ class _MerchantsListScreenState extends State<MerchantsListScreen> {
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
   void _onScroll() {
     if (!_scrollController.hasClients) return;
+    if (_searchQuery.isNotEmpty) return;
 
     final maxScroll = _scrollController.position.maxScrollExtent;
     final currentScroll = _scrollController.position.pixels;
 
-    // Load more when user scrolls to 80% of the list
     if (currentScroll >= maxScroll * 0.8) {
       final cubit = context.read<MerchantCubit>();
       final currentState = cubit.state;
@@ -103,7 +104,7 @@ class _MerchantsListScreenState extends State<MerchantsListScreen> {
                       ),
                       Expanded(
                         child: Text(
-                          AppTexts.merchants,
+                          AppTexts.homeCategoryManufacturingSupplies,
                           style: TextStyle(
                             fontSize: 18.sp,
                             fontWeight: FontWeight.w800,
@@ -114,6 +115,32 @@ class _MerchantsListScreenState extends State<MerchantsListScreen> {
                     ],
                   ),
                 ),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value.trim().toLowerCase();
+                      });
+                    },
+                    decoration: InputDecoration(
+                      hintText: '${AppTexts.homeCategoryManufacturingSupplies}...',
+                      prefixIcon: const Icon(Icons.search),
+                      filled: true,
+                      fillColor: AppColors.surface,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                        borderSide: BorderSide(color: AppColors.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                        borderSide: BorderSide(color: AppColors.border),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 10.h),
 
                 Expanded(
                   child: BlocBuilder<MerchantCubit, MerchantState>(
@@ -125,13 +152,32 @@ class _MerchantsListScreenState extends State<MerchantsListScreen> {
 
                       List<Merchant> merchants = [];
                       bool hasMore = false;
+                      int? currentPage;
+                      int? lastPage;
+                      int? totalItems;
 
                       if (state is MerchantsLoaded) {
                         merchants = state.merchants;
                         hasMore = state.hasMore;
+                        currentPage = state.meta?.currentPage;
+                        lastPage = state.meta?.lastPage;
+                        totalItems = state.meta?.total;
                       }
 
-                      if (merchants.isEmpty &&
+                      final filteredMerchants = merchants.where((merchant) {
+                        if (_searchQuery.isEmpty) return true;
+                        return merchant.name.toLowerCase().contains(
+                                  _searchQuery,
+                                ) ||
+                                merchant.phone.toLowerCase().contains(
+                                  _searchQuery,
+                                ) ||
+                                (merchant.whatsappNumber ?? '').toLowerCase().contains(
+                                  _searchQuery,
+                                );
+                      }).toList();
+
+                      if (filteredMerchants.isEmpty &&
                           state is! MerchantsLoading &&
                           state is! MerchantsLoadingMore) {
                         return Center(
@@ -188,15 +234,23 @@ class _MerchantsListScreenState extends State<MerchantsListScreen> {
                               horizontal: 16.w,
                               vertical: 8.h,
                             ),
-                            itemCount: merchants.length + (hasMore ? 1 : 0),
+                            itemCount: filteredMerchants.length +
+                                ((_searchQuery.isEmpty && hasMore) ? 1 : 0) +
+                                ((_searchQuery.isEmpty &&
+                                        currentPage != null &&
+                                        lastPage != null)
+                                    ? 1
+                                    : 0),
                             separatorBuilder: (context, index) {
-                              if (index >= merchants.length) {
+                              if (index >= filteredMerchants.length) {
                                 return const SizedBox.shrink();
                               }
                               return SizedBox(height: 12.h);
                             },
                             itemBuilder: (context, index) {
-                              if (index >= merchants.length) {
+                              if (_searchQuery.isEmpty &&
+                                  hasMore &&
+                                  index == filteredMerchants.length) {
                                 // Loading more indicator
                                 return Padding(
                                   padding: EdgeInsets.symmetric(vertical: 16.h),
@@ -207,9 +261,30 @@ class _MerchantsListScreenState extends State<MerchantsListScreen> {
                                   ),
                                 );
                               }
+
+                              final footerIndex = filteredMerchants.length +
+                                  ((_searchQuery.isEmpty && hasMore) ? 1 : 0);
+                              if (_searchQuery.isEmpty &&
+                                  currentPage != null &&
+                                  lastPage != null &&
+                                  index == footerIndex) {
+                                return Padding(
+                                  padding: EdgeInsets.only(top: 8.h, bottom: 12.h),
+                                  child: Center(
+                                    child: Text(
+                                      'Page $currentPage / $lastPage'
+                                      '${totalItems != null ? '  •  Total: $totalItems' : ''}',
+                                      style: TextStyle(
+                                        fontSize: 12.sp,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }
                               return _buildAnimatedMerchantCard(
                                 context,
-                                merchants[index],
+                                filteredMerchants[index],
                                 index,
                               );
                             },
@@ -330,6 +405,24 @@ class _MerchantsListScreenState extends State<MerchantsListScreen> {
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: 6.h),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.star,
+                            size: 14.sp,
+                            color: AppColors.warning,
+                          ),
+                          SizedBox(width: 4.w),
+                          Text(
+                            '${merchant.rating.toStringAsFixed(1)} (${merchant.totalReviews} ${AppTexts.reviews})',
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
                       ),
                       SizedBox(height: 8.h),
                       Row(

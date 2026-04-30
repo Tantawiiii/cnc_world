@@ -1,4 +1,6 @@
 import '../../../../core/di/inject.dart' as di;
+import '../../../../core/errors/session_unauthorized_exception.dart';
+import '../../../../core/network/api_constants.dart';
 import '../../../../core/network/api_service.dart';
 import '../models/profile_models.dart';
 
@@ -7,11 +9,15 @@ class ProfileRepository {
 
   Future<ProfileResponse> checkAuth() async {
     try {
-      final response = await _apiService.get('/api/check-auth');
+      final response = await _apiService.get(ApiConstants.checkAuth);
 
-      if (response.statusCode != null &&
-          response.statusCode! >= 200 &&
-          response.statusCode! < 300 &&
+      final status = response.statusCode ?? 0;
+      if (status == 401 || status == 403) {
+        throw SessionUnauthorizedException();
+      }
+
+      if (status >= 200 &&
+          status < 300 &&
           response.data != null) {
         return ProfileResponse.fromJson(response.data);
       } else {
@@ -22,6 +28,20 @@ class ProfileRepository {
       }
     } catch (e) {
       rethrow;
+    }
+  }
+
+  Future<void> updateLocation({required String lat, required String lng}) async {
+    final response = await _apiService.post(
+      ApiConstants.updateLocation,
+      data: {'lat': lat, 'lng': lng},
+    );
+    final status = response.statusCode ?? 0;
+    if (status < 200 || status >= 300) {
+      final errorMessage = response.data is Map
+          ? response.data['message'] ?? 'Failed to update location'
+          : 'Failed to update location';
+      throw Exception(errorMessage);
     }
   }
 

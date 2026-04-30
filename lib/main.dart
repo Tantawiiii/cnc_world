@@ -9,9 +9,11 @@ import 'core/constant/app_texts.dart';
 import 'core/di/inject.dart' as di;
 import 'core/localization/app_localizations.dart';
 import 'core/network/dio_client.dart';
+import 'core/routing/app_navigator.dart';
 import 'core/routing/app_router.dart';
 import 'core/routing/app_routes.dart';
 import 'core/services/storage_service.dart';
+import 'core/services/firebase_auth_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/connectivity/logic/connectivity_cubit.dart';
 import 'core/services/remote_config_service.dart';
@@ -38,6 +40,11 @@ void main() async {
     dioClient.setAuthToken(token);
   }
 
+  // Restore Firebase auth session for chat/firestore access.
+  await di.sl<FirebaseAuthService>().ensureSignedIn(
+    customToken: storageService.getFirebaseCustomToken(),
+  );
+
   // Initialize Remote Config
   await di.sl<RemoteConfigService>().init();
 
@@ -48,13 +55,13 @@ class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
   @override
-  State<MyApp> createState() => _MyAppState();
+  State<MyApp> createState() => MyAppState();
 
-  static _MyAppState? of(BuildContext context) =>
-      context.findAncestorStateOfType<_MyAppState>();
+  static MyAppState? of(BuildContext context) =>
+      context.findAncestorStateOfType<MyAppState>();
 }
 
-class _MyAppState extends State<MyApp> {
+class MyAppState extends State<MyApp> {
   Locale _locale = const Locale('ar', 'SA');
 
   @override
@@ -94,6 +101,7 @@ class _MyAppState extends State<MyApp> {
               return MaterialApp(
                 title: AppTexts.appTitle,
                 debugShowCheckedModeBanner: false,
+                navigatorKey: AppNavigator.navigatorKey,
                 theme: AppTheme.lightTheme,
                 locale: _locale,
                 supportedLocales: const [Locale('ar', 'SA'), Locale('en', 'US')],

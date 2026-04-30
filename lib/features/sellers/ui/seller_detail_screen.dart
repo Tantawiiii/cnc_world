@@ -7,10 +7,12 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constant/app_colors.dart';
 import '../../../core/constant/app_texts.dart';
+import '../../chat/ui/chat_button.dart';
 import '../cubit/seller_cubit.dart';
 import '../cubit/seller_state.dart';
 import '../data/models/seller_models.dart';
 import '../data/repositories/seller_repository.dart';
+import '../../../core/widgets/add_comment_widget.dart';
 
 class SellerDetailScreen extends StatelessWidget {
   final int sellerId;
@@ -82,7 +84,7 @@ class SellerDetailScreen extends StatelessWidget {
                 Expanded(
                   child: Shimmer.fromColors(
                     baseColor: AppColors.surfaceVariant,
-                    highlightColor: AppColors.surfaceVariant.withOpacity(0.5),
+                    highlightColor: AppColors.surfaceVariant.withValues(alpha: 0.5),
                     child: Container(
                       height: 20.h,
                       width: 150.w,
@@ -99,7 +101,7 @@ class SellerDetailScreen extends StatelessWidget {
           // Image shimmer
           Shimmer.fromColors(
             baseColor: AppColors.surfaceVariant,
-            highlightColor: AppColors.surfaceVariant.withOpacity(0.5),
+            highlightColor: AppColors.surfaceVariant.withValues(alpha: 0.5),
             child: Container(
               height: 300.h,
               margin: EdgeInsets.symmetric(horizontal: 16.w),
@@ -193,6 +195,18 @@ class SellerDetailScreen extends StatelessWidget {
                             ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.only(left: 8.w),
+                          child: StandaloneChatButton(
+                            targetUserId: seller.id.toString(),
+                            targetUserName: seller.workshopName.isNotEmpty
+                                ? seller.workshopName
+                                : seller.name,
+                            targetUserImage: seller.imageUrlString.isNotEmpty
+                                ? seller.imageUrlString
+                                : null,
                           ),
                         ),
                       ],
@@ -302,6 +316,25 @@ class SellerDetailScreen extends StatelessWidget {
                                     ),
                                   ),
                                   SizedBox(height: 20.h),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.star,
+                                        color: AppColors.warning,
+                                        size: 18.sp,
+                                      ),
+                                      SizedBox(width: 6.w),
+                                      Text(
+                                        '${seller.rating.toStringAsFixed(1)} (${seller.totalReviews} ${AppTexts.reviews})',
+                                        style: TextStyle(
+                                          fontSize: 14.sp,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 20.h),
 
                                   // Nature of Work
                                   if (seller.natureOfWork.isNotEmpty) ...[
@@ -357,7 +390,7 @@ class SellerDetailScreen extends StatelessWidget {
                                             padding: EdgeInsets.all(8.w),
                                             decoration: BoxDecoration(
                                               color: AppColors.primary
-                                                  .withOpacity(0.2),
+                                                  .withValues(alpha: 0.2),
                                               shape: BoxShape.circle,
                                             ),
                                             child: Icon(
@@ -421,8 +454,8 @@ class SellerDetailScreen extends StatelessWidget {
                                           Container(
                                             padding: EdgeInsets.all(8.w),
                                             decoration: BoxDecoration(
-                                              color: AppColors.info.withOpacity(
-                                                0.2,
+                                              color: AppColors.info.withValues(
+                                                alpha: 0.2,
                                               ),
                                               shape: BoxShape.circle,
                                             ),
@@ -481,8 +514,8 @@ class SellerDetailScreen extends StatelessWidget {
                                           Container(
                                             padding: EdgeInsets.all(8.w),
                                             decoration: BoxDecoration(
-                                              color: AppColors.info.withOpacity(
-                                                0.2,
+                                              color: AppColors.info.withValues(
+                                                alpha: 0.2,
                                               ),
                                               shape: BoxShape.circle,
                                             ),
@@ -523,6 +556,98 @@ class SellerDetailScreen extends StatelessWidget {
                                       ),
                                     ),
                                   ],
+
+                                  SizedBox(height: 20.h),
+                                  Divider(color: AppColors.border),
+                                  SizedBox(height: 20.h),
+                                  Text(
+                                    AppTexts.comments,
+                                    style: TextStyle(
+                                      fontSize: 16.sp,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  SizedBox(height: 12.h),
+                                  AddCommentWidget(
+                                    commentableUserId: seller.id,
+                                    onCommentAdded: () {
+                                      context.read<SellerCubit>().loadSellerDetail(sellerId);
+                                    },
+                                  ),
+                                  SizedBox(height: 16.h),
+                                  if (seller.comments.isEmpty)
+                                    Text(
+                                      AppTexts.noCommentsAvailable,
+                                      style: TextStyle(
+                                        fontSize: 14.sp,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    )
+                                  else
+                                    ...seller.comments.map(
+                                      (comment) => Container(
+                                        margin: EdgeInsets.only(bottom: 10.h),
+                                        padding: EdgeInsets.all(12.w),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.surfaceVariant,
+                                          borderRadius: BorderRadius.circular(12.r),
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: Text(
+                                                    comment.user.name,
+                                                    style: TextStyle(
+                                                      fontSize: 14.sp,
+                                                      fontWeight: FontWeight.w700,
+                                                      color:
+                                                          AppColors.textPrimary,
+                                                    ),
+                                                  ),
+                                                ),
+                                                Icon(
+                                                  Icons.star,
+                                                  size: 14.sp,
+                                                  color: AppColors.warning,
+                                                ),
+                                                SizedBox(width: 4.w),
+                                                Text(
+                                                  comment.rate
+                                                      .toStringAsFixed(1),
+                                                  style: TextStyle(
+                                                    fontSize: 12.sp,
+                                                    color:
+                                                        AppColors.textSecondary,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            SizedBox(height: 6.h),
+                                            Text(
+                                              comment.comment,
+                                              style: TextStyle(
+                                                fontSize: 14.sp,
+                                                color: AppColors.textSecondary,
+                                                height: 1.4,
+                                              ),
+                                            ),
+                                            SizedBox(height: 6.h),
+                                            Text(
+                                              comment.createdAt,
+                                              style: TextStyle(
+                                                fontSize: 12.sp,
+                                                color: AppColors.textTertiary,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
                                 ],
                               ),
                             ),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../../../core/constant/app_colors.dart';
 import '../../../../core/constant/app_texts.dart';
@@ -15,6 +16,7 @@ import '../../../../shared/widgets/app_dropdown.dart';
 import '../../../../shared/widgets/primary_button.dart';
 import '../cubit/register_cubit.dart';
 import '../data/models/register_models.dart';
+import 'pick_location_map_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   final UserRole? role;
@@ -36,6 +38,10 @@ class _RegisterScreenState extends State<RegisterScreen>
   final _natureOfWorkController = TextEditingController();
   final _facebookLinkController = TextEditingController();
   final _whatsappNumberController = TextEditingController();
+  final _emailController = TextEditingController();
+
+  double? _pickedLat;
+  double? _pickedLng;
 
   String? _selectedCountry;
   String? _selectedCountryName;
@@ -211,7 +217,34 @@ class _RegisterScreenState extends State<RegisterScreen>
     _natureOfWorkController.dispose();
     _facebookLinkController.dispose();
     _whatsappNumberController.dispose();
+    _emailController.dispose();
     super.dispose();
+  }
+
+  Future<void> _openPickMap() async {
+    final navigator = Navigator.of(context);
+    final initial = (_pickedLat != null && _pickedLng != null)
+        ? LatLng(_pickedLat!, _pickedLng!)
+        : null;
+    final result = await navigator.push<PickedMapLocation>(
+      MaterialPageRoute(
+        builder: (_) => PickLocationMapScreen(initialTarget: initial),
+      ),
+    );
+    if (!mounted || result == null) return;
+    setState(() {
+      _pickedLat = result.latitude;
+      _pickedLng = result.longitude;
+      if (result.addressLabel != null && result.addressLabel!.trim().isNotEmpty) {
+        _addressController.text = result.addressLabel!.trim();
+      }
+    });
+  }
+
+  bool _isValidEmail(String value) {
+    final v = value.trim();
+    if (v.isEmpty) return false;
+    return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(v);
   }
 
   Future<void> _pickImage(BuildContext context) async {
@@ -284,6 +317,35 @@ class _RegisterScreenState extends State<RegisterScreen>
         return;
       }
 
+      final localizations = AppLocalizations.of(context);
+      if (selectedRole == UserRole.seller) {
+        if (!_isValidEmail(_emailController.text)) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                _emailController.text.trim().isEmpty
+                    ? (localizations?.emailRequired ?? 'يرجى إدخال البريد')
+                    : (localizations?.invalidEmail ?? 'بريد غير صالح'),
+              ),
+              backgroundColor: AppColors.error,
+            ),
+          );
+          return;
+        }
+        if (_pickedLat == null || _pickedLng == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                localizations?.pickWorkshopLocationRequired ??
+                    AppTexts.pickWorkshopLocationRequired,
+              ),
+              backgroundColor: AppColors.error,
+            ),
+          );
+          return;
+        }
+      }
+
       final countryName = _selectedCountryName;
       final stateName = _selectedStateName;
 
@@ -309,6 +371,15 @@ class _RegisterScreenState extends State<RegisterScreen>
             ? _whatsappNumberController.text.trim()
             : null,
         imageId: _needsImage() ? _imageId : null,
+        email: selectedRole == UserRole.seller
+            ? _emailController.text.trim()
+            : null,
+        lat: selectedRole == UserRole.seller && _pickedLat != null
+            ? _pickedLat!.toString()
+            : null,
+        lng: selectedRole == UserRole.seller && _pickedLng != null
+            ? _pickedLng!.toString()
+            : null,
       );
 
       context.read<RegisterCubit>().register(request);
@@ -713,6 +784,28 @@ class _RegisterScreenState extends State<RegisterScreen>
                                         return null;
                                       },
                                     ),
+                                    if (selectedRole == UserRole.seller) ...[
+                                      SizedBox(height: 12.h),
+                                      AppTextField(
+                                        controller: _emailController,
+                                        hint: localizations?.email ?? 'Email',
+                                        keyboardType: TextInputType.emailAddress,
+                                        leadingIcon: Icons.email_outlined,
+                                        validator: (value) {
+                                          if (value == null ||
+                                              value.trim().isEmpty) {
+                                            return localizations
+                                                    ?.emailRequired ??
+                                                'Required';
+                                          }
+                                          if (!_isValidEmail(value)) {
+                                            return localizations?.invalidEmail ??
+                                                'Invalid';
+                                          }
+                                          return null;
+                                        },
+                                      ),
+                                    ],
                                     SizedBox(height: 12.h),
                                     AppTextField(
                                       controller: _passwordController,
@@ -1005,6 +1098,62 @@ class _RegisterScreenState extends State<RegisterScreen>
                               ),
                             ],
 
+                            if (selectedRole == UserRole.seller) ...[
+                              SizedBox(height: 16.h),
+                              Builder(
+                                builder: (context) {
+                                  final localizations = AppLocalizations.of(
+                                    context,
+                                  );
+                                  return Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      Text(
+                                        localizations?.pickWorkshopLocation ??
+                                            AppTexts.pickWorkshopLocation,
+                                        style: TextStyle(
+                                          fontSize: 14.sp,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      ),
+                                      SizedBox(height: 8.h),
+                                      OutlinedButton.icon(
+                                        onPressed: _openPickMap,
+                                        icon: const Icon(Icons.map_outlined),
+                                        label: Text(
+                                          localizations?.openMap ??
+                                              AppTexts.openMap,
+                                        ),
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: AppColors.primary,
+                                          side: BorderSide(
+                                            color: AppColors.primary,
+                                            width: 1.5,
+                                          ),
+                                          padding: EdgeInsets.symmetric(
+                                            vertical: 12.h,
+                                          ),
+                                        ),
+                                      ),
+                                      if (_pickedLat != null &&
+                                          _pickedLng != null) ...[
+                                        SizedBox(height: 8.h),
+                                        Text(
+                                          '${localizations?.locationPickedShort ?? AppTexts.locationPickedShort}: ${_pickedLat!.toStringAsFixed(5)}, ${_pickedLng!.toStringAsFixed(5)}',
+                                          style: TextStyle(
+                                            fontSize: 12.sp,
+                                            color: AppColors.textSecondary,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  );
+                                },
+                              ),
+                            ],
+
                             if (_needsSocialLinks()) ...[
                               SizedBox(height: 12.h),
                               Builder(
@@ -1114,6 +1263,7 @@ class _RegisterScreenState extends State<RegisterScreen>
     );
   }
 
+
   String _getRoleTitle(UserRole role, BuildContext context) {
     final localizations = AppLocalizations.of(context);
     switch (role) {
@@ -1127,4 +1277,5 @@ class _RegisterScreenState extends State<RegisterScreen>
         return localizations?.roleMerchant ?? AppTexts.roleMerchant;
     }
   }
+
 }
