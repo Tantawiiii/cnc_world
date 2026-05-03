@@ -1,5 +1,4 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../data/models/merchant_models.dart';
 import '../data/repositories/merchant_repository.dart';
 import 'merchant_state.dart';
 

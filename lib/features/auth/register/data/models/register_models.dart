@@ -24,6 +24,9 @@ class RegisterRequest {
   final String? facebookLink;
   final String? whatsappNumber;
   final int? imageId;
+  final String? email;
+  final String? lat;
+  final String? lng;
 
   RegisterRequest({
     required this.role,
@@ -39,6 +42,9 @@ class RegisterRequest {
     this.facebookLink,
     this.whatsappNumber,
     this.imageId,
+    this.email,
+    this.lat,
+    this.lng,
   });
 
   Map<String, dynamic> toJson() {
@@ -68,6 +74,12 @@ class RegisterRequest {
         if (state != null) data['state'] = state;
         if (natureOfWork != null) data['nature_of_work'] = natureOfWork;
         if (imageId != null) data['image'] = imageId;
+        final emailVal = email;
+        if (emailVal != null && emailVal.isNotEmpty) data['email'] = emailVal;
+        final latVal = lat;
+        if (latVal != null && latVal.isNotEmpty) data['lat'] = latVal;
+        final lngVal = lng;
+        if (lngVal != null && lngVal.isNotEmpty) data['lng'] = lngVal;
         break;
       case UserRole.merchant:
         if (facebookLink != null) data['facebook_link'] = facebookLink;

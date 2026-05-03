@@ -33,6 +33,54 @@ class MerchantImage {
   }
 }
 
+class MerchantCommentUser {
+  final int id;
+  final String name;
+
+  MerchantCommentUser({
+    required this.id,
+    required this.name,
+  });
+
+  factory MerchantCommentUser.fromJson(Map<String, dynamic> json) {
+    return MerchantCommentUser(
+      id: json['id'] ?? 0,
+      name: json['name'] ?? '',
+    );
+  }
+}
+
+class MerchantComment {
+  final int id;
+  final MerchantCommentUser user;
+  final String comment;
+  final double rate;
+  final String createdAt;
+
+  MerchantComment({
+    required this.id,
+    required this.user,
+    required this.comment,
+    required this.rate,
+    required this.createdAt,
+  });
+
+  factory MerchantComment.fromJson(Map<String, dynamic> json) {
+    final rateRaw = json['rate'];
+    return MerchantComment(
+      id: json['id'] ?? 0,
+      user: MerchantCommentUser.fromJson(
+        (json['user'] as Map<String, dynamic>?) ?? <String, dynamic>{},
+      ),
+      comment: json['comment'] ?? '',
+      rate: rateRaw is num
+          ? rateRaw.toDouble()
+          : double.tryParse(rateRaw?.toString() ?? '0') ?? 0,
+      createdAt: json['createdAt'] ?? '',
+    );
+  }
+}
+
 class Merchant {
   final int id;
   final String name;
@@ -40,6 +88,9 @@ class Merchant {
   final String role;
   final String? facebookLink;
   final String? whatsappNumber;
+  final double rating;
+  final int totalReviews;
+  final List<MerchantComment> comments;
   final bool active;
   final String createdAt;
   final String updatedAt;
@@ -53,6 +104,9 @@ class Merchant {
     required this.role,
     this.facebookLink,
     this.whatsappNumber,
+    required this.rating,
+    required this.totalReviews,
+    required this.comments,
     required this.active,
     required this.createdAt,
     required this.updatedAt,
@@ -61,6 +115,7 @@ class Merchant {
   });
 
   factory Merchant.fromJson(Map<String, dynamic> json) {
+    final ratingRaw = json['rating'];
     return Merchant(
       id: json['id'] ?? 0,
       name: json['name'] ?? '',
@@ -68,6 +123,13 @@ class Merchant {
       role: json['role'] ?? '',
       facebookLink: json['facebook_link'],
       whatsappNumber: json['whatsapp_number'],
+      rating: ratingRaw is num
+          ? ratingRaw.toDouble()
+          : double.tryParse(ratingRaw?.toString() ?? '0') ?? 0,
+      totalReviews: json['total_reviews'] ?? 0,
+      comments: (json['comments'] as List<dynamic>? ?? [])
+          .map((item) => MerchantComment.fromJson(item))
+          .toList(),
       active: json['active'] ?? false,
       createdAt: json['createdAt'] ?? '',
       updatedAt: json['updatedAt'] ?? '',

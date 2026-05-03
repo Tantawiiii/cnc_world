@@ -96,6 +96,8 @@ class SettingsContentWidget extends StatelessWidget {
           SizedBox(height: 24.h),
           _buildLanguageCard(context),
           SizedBox(height: 24.h),
+          _buildInformationCards(context),
+          SizedBox(height: 24.h),
           _buildLogoutCard(context, storageService),
         ],
       ),
@@ -130,8 +132,113 @@ class SettingsContentWidget extends StatelessWidget {
           SizedBox(height: 24.h),
           _buildLanguageCard(context),
           SizedBox(height: 24.h),
+          _buildInformationCards(context),
+          SizedBox(height: 24.h),
           _buildLogoutCard(context, storageService),
         ],
+      ),
+    );
+  }
+
+  Widget _buildInformationCards(BuildContext context) {
+    return Column(
+      children: [
+        _buildNavigationCard(
+          title: AppTexts.termsConditions,
+          subtitle: AppTexts.termsConditionsSubtitle,
+          icon: Icons.description_outlined,
+          color: AppColors.info,
+          onTap: () => Navigator.of(context).pushNamed(AppRoutes.termsConditions),
+        ),
+        SizedBox(height: 12.h),
+        _buildNavigationCard(
+          title: AppTexts.refundPolicy,
+          subtitle: AppTexts.refundPolicySubtitle,
+          icon: Icons.receipt_long_outlined,
+          color: AppColors.warning,
+          onTap: () => Navigator.of(context).pushNamed(AppRoutes.refundPolicy),
+        ),
+        SizedBox(height: 12.h),
+        _buildNavigationCard(
+          title: AppTexts.securityPolicy,
+          subtitle: AppTexts.securityPolicySubtitle,
+          icon: Icons.shield_outlined,
+          color: AppColors.success,
+          onTap: () => Navigator.of(context).pushNamed(AppRoutes.security),
+        ),
+        SizedBox(height: 12.h),
+        _buildNavigationCard(
+          title: AppTexts.contactUs,
+          subtitle: AppTexts.contactInfoSubtitle,
+          icon: Icons.support_agent_outlined,
+          color: AppColors.primaryDark,
+          onTap: () => Navigator.of(context).pushNamed(AppRoutes.contactInfo),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNavigationCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16.r),
+        child: Container(
+          padding: EdgeInsets.all(18.w),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16.r),
+            border: Border.all(color: color.withAlpha(45), width: 1),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(10.w),
+                decoration: BoxDecoration(
+                  color: color.withAlpha(25),
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: Icon(icon, color: color, size: 22.sp),
+              ),
+              SizedBox(width: 14.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 17.sp,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios,
+                color: AppColors.textTertiary,
+                size: 16.sp,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -27,7 +27,13 @@ final class AppRoutes {
   static const String addDesign = '/add-design';
   static const String sellers = '/sellers';
   static const String sellerDetail = '/seller-detail';
+  static const String engineers = '/engineers';
+  static const String engineerDetail = '/engineer-detail';
   static const String profile = '/profile';
   static const String contactUs = '/contact-us';
   static const String complaint = '/complaint';
+  static const String termsConditions = '/terms-conditions';
+  static const String refundPolicy = '/refund-policy';
+  static const String security = '/security';
+  static const String contactInfo = '/contact-info';
 }

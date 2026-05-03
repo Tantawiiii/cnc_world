@@ -56,6 +56,8 @@ class AppLocalizations {
       'dontHaveAccount': 'ليس لديك حساب؟',
       'register': 'سجل الآن',
       'phoneRequired': 'يرجى إدخال رقم الهاتف',
+      'invalidPhone':
+          'أدخل رقم جوال مصري صحيح (11 رقمًا يبدأ بـ 01، مثل 01012345678)',
       'passwordRequired': 'يرجى إدخال كلمة المرور',
 
       // Register
@@ -96,6 +98,13 @@ class AppLocalizations {
       'uploadingImage': 'جاري الرفع...',
       'pickingImage': 'جاري اختيار الصورة...',
       'tapToSelect': 'انقر للاختيار',
+      'pickWorkshopLocation': 'موقع الورشة على الخريطة',
+      'pickWorkshopLocationRequired': 'يرجى تحديد موقع الورشة على الخريطة',
+      'openMap': 'فتح الخريطة',
+      'locationPickedShort': 'تم تحديد الموقع',
+      'confirmLocation': 'تأكيد الموقع',
+      'nearestWorkshopToYou': 'أقرب ورشة إليك',
+      'kmApprox': 'كم (تقريبي)',
 
       // Home
       'home': 'الرئيسية',
@@ -107,6 +116,7 @@ class AppLocalizations {
       'homeCategoryCompanyDirectory': 'دليل الشركات',
       'homeCategoryDesigns': 'التصميمات',
       'homeCategoryWorkshopDirectory': 'دليل الورش',
+      'homeCategoryEngineers': 'دليل المهندسين',
       'errorLoadingSliders': 'خطأ في تحميل الشرائح',
 
       // Contact Us
@@ -204,6 +214,8 @@ class AppLocalizations {
       'dontHaveAccount': "Don't have an account?",
       'register': 'Sign Up',
       'phoneRequired': 'Please enter phone number',
+      'invalidPhone':
+          'Enter a valid Egyptian mobile (11 digits starting with 01, e.g. 01012345678)',
       'passwordRequired': 'Please enter password',
 
       // Register
@@ -244,6 +256,13 @@ class AppLocalizations {
       'uploadingImage': 'Uploading...',
       'pickingImage': 'Selecting image...',
       'tapToSelect': 'Tap to select',
+      'pickWorkshopLocation': 'Workshop location on map',
+      'pickWorkshopLocationRequired': 'Please pick workshop location on the map',
+      'openMap': 'Open map',
+      'locationPickedShort': 'Location selected',
+      'confirmLocation': 'Confirm location',
+      'nearestWorkshopToYou': 'Nearest workshop to you',
+      'kmApprox': 'km (approx.)',
 
       // Home
       'home': 'Home',
@@ -255,6 +274,7 @@ class AppLocalizations {
       'homeCategoryCompanyDirectory': 'Company Directory',
       'homeCategoryDesigns': 'Designs',
       'homeCategoryWorkshopDirectory': 'Workshop Directory',
+      'homeCategoryEngineers': 'Engineers Directory',
       'errorLoadingSliders': 'Error loading sliders',
 
       // Contact Us
@@ -349,6 +369,7 @@ class AppLocalizations {
   String get dontHaveAccount => translate('dontHaveAccount');
   String get register => translate('register');
   String get phoneRequired => translate('phoneRequired');
+  String get invalidPhone => translate('invalidPhone');
   String get passwordRequired => translate('passwordRequired');
 
   // Register
@@ -389,6 +410,14 @@ class AppLocalizations {
   String get uploadingImage => translate('uploadingImage');
   String get pickingImage => translate('pickingImage');
   String get tapToSelect => translate('tapToSelect');
+  String get pickWorkshopLocation => translate('pickWorkshopLocation');
+  String get pickWorkshopLocationRequired =>
+      translate('pickWorkshopLocationRequired');
+  String get openMap => translate('openMap');
+  String get locationPickedShort => translate('locationPickedShort');
+  String get confirmLocation => translate('confirmLocation');
+  String get nearestWorkshopToYou => translate('nearestWorkshopToYou');
+  String get kmApprox => translate('kmApprox');
 
   // Home
   String get home => translate('home');
@@ -403,6 +432,7 @@ class AppLocalizations {
   String get homeCategoryDesigns => translate('homeCategoryDesigns');
   String get homeCategoryWorkshopDirectory =>
       translate('homeCategoryWorkshopDirectory');
+  String get homeCategoryEngineers => translate('homeCategoryEngineers');
   String get errorLoadingSliders => translate('errorLoadingSliders');
 
   // Contact Us

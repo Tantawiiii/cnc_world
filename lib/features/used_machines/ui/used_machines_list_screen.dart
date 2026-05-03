@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
-import 'dart:math' as math;
 
 import '../../../core/constant/app_colors.dart';
 import '../../../core/constant/app_texts.dart';
@@ -13,10 +12,23 @@ import '../../../core/routing/app_routes.dart';
 import '../cubit/used_machine_cubit.dart';
 import '../cubit/used_machine_state.dart';
 import '../data/models/used_machine_models.dart';
-import '../data/repositories/used_machine_repository.dart';
 
-class UsedMachinesListScreen extends StatelessWidget {
+class UsedMachinesListScreen extends StatefulWidget {
   const UsedMachinesListScreen({super.key});
+
+  @override
+  State<UsedMachinesListScreen> createState() => _UsedMachinesListScreenState();
+}
+
+class _UsedMachinesListScreenState extends State<UsedMachinesListScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -118,6 +130,32 @@ class UsedMachinesListScreen extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 16.h),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value.trim().toLowerCase();
+                      });
+                    },
+                    decoration: InputDecoration(
+                      hintText: '${AppTexts.usedMachines}...',
+                      prefixIcon: const Icon(Icons.search),
+                      filled: true,
+                      fillColor: AppColors.surface,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                        borderSide: BorderSide(color: AppColors.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                        borderSide: BorderSide(color: AppColors.border),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 12.h),
 
                 Expanded(
                   child: BlocBuilder<UsedMachineCubit, UsedMachineState>(
@@ -125,7 +163,20 @@ class UsedMachinesListScreen extends StatelessWidget {
                       if (state is UsedMachinesLoading) {
                         return _buildShimmerList();
                       } else if (state is UsedMachinesLoaded) {
-                        if (state.machines.isEmpty) {
+                        final filteredMachines = state.machines.where((machine) {
+                          if (_searchQuery.isEmpty) return true;
+                          return machine.name.toLowerCase().contains(
+                                    _searchQuery,
+                                  ) ||
+                                  machine.description.toLowerCase().contains(
+                                    _searchQuery,
+                                  ) ||
+                                  machine.price.toLowerCase().contains(
+                                    _searchQuery,
+                                  );
+                        }).toList();
+
+                        if (filteredMachines.isEmpty) {
                           return Builder(
                             builder: (context) {
                               final localizations = AppLocalizations.of(
@@ -154,13 +205,13 @@ class UsedMachinesListScreen extends StatelessWidget {
                               horizontal: 16.w,
                               vertical: 8.h,
                             ),
-                            itemCount: state.machines.length,
+                            itemCount: filteredMachines.length,
                             separatorBuilder: (context, index) =>
                                 SizedBox(height: 12.h),
                             itemBuilder: (context, index) {
                               return _buildAnimatedMachineCard(
                                 context,
-                                state.machines[index],
+                                filteredMachines[index],
                                 index,
                               );
                             },

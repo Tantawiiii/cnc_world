@@ -33,6 +33,54 @@ class SellerImage {
   }
 }
 
+class SellerCommentUser {
+  final int id;
+  final String name;
+
+  SellerCommentUser({
+    required this.id,
+    required this.name,
+  });
+
+  factory SellerCommentUser.fromJson(Map<String, dynamic> json) {
+    return SellerCommentUser(
+      id: json['id'] ?? 0,
+      name: json['name'] ?? '',
+    );
+  }
+}
+
+class SellerComment {
+  final int id;
+  final SellerCommentUser user;
+  final String comment;
+  final double rate;
+  final String createdAt;
+
+  SellerComment({
+    required this.id,
+    required this.user,
+    required this.comment,
+    required this.rate,
+    required this.createdAt,
+  });
+
+  factory SellerComment.fromJson(Map<String, dynamic> json) {
+    final rateRaw = json['rate'];
+    return SellerComment(
+      id: json['id'] ?? 0,
+      user: SellerCommentUser.fromJson(
+        (json['user'] as Map<String, dynamic>?) ?? <String, dynamic>{},
+      ),
+      comment: json['comment'] ?? '',
+      rate: rateRaw is num
+          ? rateRaw.toDouble()
+          : double.tryParse(rateRaw?.toString() ?? '0') ?? 0,
+      createdAt: json['createdAt'] ?? '',
+    );
+  }
+}
+
 class Seller {
   final int id;
   final String name;
@@ -43,8 +91,13 @@ class Seller {
   final String city;
   final String natureOfWork;
   final String workshopName;
+  final double rating;
+  final int totalReviews;
+  final List<SellerComment> comments;
   final String? imageUrl;
   final SellerImage? image;
+  final String? lat;
+  final String? lng;
 
   Seller({
     required this.id,
@@ -56,11 +109,17 @@ class Seller {
     required this.city,
     required this.natureOfWork,
     required this.workshopName,
+    required this.rating,
+    required this.totalReviews,
+    required this.comments,
     this.imageUrl,
     this.image,
+    this.lat,
+    this.lng,
   });
 
   factory Seller.fromJson(Map<String, dynamic> json) {
+    final ratingRaw = json['rating'];
     return Seller(
       id: json['id'] ?? 0,
       name: json['name'] ?? '',
@@ -71,8 +130,19 @@ class Seller {
       city: json['city'] ?? '',
       natureOfWork: json['nature_of_work'] ?? '',
       workshopName: json['workshop_name'] ?? '',
+      rating: ratingRaw is num
+          ? ratingRaw.toDouble()
+          : double.tryParse(ratingRaw?.toString() ?? '0') ?? 0,
+      totalReviews: json['total_reviews'] ?? 0,
+      comments: (json['comments'] as List<dynamic>? ?? [])
+          .map(
+            (item) => SellerComment.fromJson(item as Map<String, dynamic>),
+          )
+          .toList(),
       imageUrl: json['imageUrl'],
       image: json['image'] != null ? SellerImage.fromJson(json['image']) : null,
+      lat: json['lat']?.toString(),
+      lng: json['lng']?.toString(),
     );
   }
 

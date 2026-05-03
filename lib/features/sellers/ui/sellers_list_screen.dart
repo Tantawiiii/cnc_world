@@ -6,11 +6,13 @@ import 'package:shimmer/shimmer.dart';
 
 import '../../../core/constant/app_colors.dart';
 import '../../../core/constant/app_texts.dart';
+import '../../../core/di/inject.dart' as di;
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/routing/app_routes.dart';
+import '../../../core/services/storage_service.dart';
 import '../cubit/seller_cubit.dart';
 import '../cubit/seller_state.dart';
 import '../data/models/seller_models.dart';
-import '../data/repositories/seller_repository.dart';
 
 class SellersListScreen extends StatefulWidget {
   const SellersListScreen({super.key});
@@ -21,18 +23,24 @@ class SellersListScreen extends StatefulWidget {
 
 class _SellersListScreenState extends State<SellersListScreen> {
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
+  final StorageService _storageService = di.sl<StorageService>();
   bool _isLoadingMore = false;
+  String _searchQuery = '';
+  ({int id, String name, double distanceKm})? _nearestSeller;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    _nearestSeller = _storageService.getNearestSeller();
   }
 
   @override
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -112,6 +120,98 @@ class _SellersListScreenState extends State<SellersListScreen> {
                     ],
                   ),
                 ),
+                if (_nearestSeller != null) ...[
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                    child: Builder(
+                      builder: (context) {
+                        final loc = AppLocalizations.of(context);
+                        final n = _nearestSeller!;
+                        return Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.all(14.w),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(14.r),
+                            border: Border.all(
+                              color: AppColors.primary.withValues(alpha: 0.35),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.near_me_outlined,
+                                color: AppColors.primary,
+                                size: 28.sp,
+                              ),
+                              SizedBox(width: 12.w),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      loc?.nearestWorkshopToYou ??
+                                          AppTexts.nearestWorkshopToYou,
+                                      style: TextStyle(
+                                        fontSize: 12.sp,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4.h),
+                                    Text(
+                                      n.name,
+                                      style: TextStyle(
+                                        fontSize: 15.sp,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${n.distanceKm.toStringAsFixed(1)} ${loc?.kmApprox ?? AppTexts.kmApprox}',
+                                      style: TextStyle(
+                                        fontSize: 13.sp,
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  SizedBox(height: 12.h),
+                ],
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value.trim().toLowerCase();
+                      });
+                    },
+                    decoration: InputDecoration(
+                      hintText: '${AppTexts.homeCategoryWorkshopDirectory}...',
+                      prefixIcon: const Icon(Icons.search),
+                      filled: true,
+                      fillColor: AppColors.surface,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                        borderSide: BorderSide(color: AppColors.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                        borderSide: BorderSide(color: AppColors.border),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 10.h),
 
                 Expanded(
                   child: BlocBuilder<SellerCubit, SellerState>(
@@ -129,7 +229,14 @@ class _SellersListScreenState extends State<SellersListScreen> {
                         hasMore = state.hasMore;
                       }
 
-                      if (sellers.isEmpty &&
+                      final filteredSellers = sellers.where((seller) {
+                        if (_searchQuery.isEmpty) return true;
+                        return seller.name.toLowerCase().contains(_searchQuery) ||
+                            seller.phone.toLowerCase().contains(_searchQuery) ||
+                            seller.workshopName.toLowerCase().contains(_searchQuery);
+                      }).toList();
+
+                      if (filteredSellers.isEmpty &&
                           state is! SellersLoading &&
                           state is! SellersLoadingMore) {
                         return Center(
@@ -186,15 +293,15 @@ class _SellersListScreenState extends State<SellersListScreen> {
                               horizontal: 16.w,
                               vertical: 8.h,
                             ),
-                            itemCount: sellers.length + (hasMore ? 1 : 0),
+                            itemCount: filteredSellers.length + (hasMore ? 1 : 0),
                             separatorBuilder: (context, index) {
-                              if (index >= sellers.length) {
+                              if (index >= filteredSellers.length) {
                                 return const SizedBox.shrink();
                               }
                               return SizedBox(height: 12.h);
                             },
                             itemBuilder: (context, index) {
-                              if (index >= sellers.length) {
+                              if (index >= filteredSellers.length) {
                                 // Loading more indicator
                                 return Padding(
                                   padding: EdgeInsets.symmetric(vertical: 16.h),
@@ -207,7 +314,7 @@ class _SellersListScreenState extends State<SellersListScreen> {
                               }
                               return _buildAnimatedSellerCard(
                                 context,
-                                sellers[index],
+                                filteredSellers[index],
                                 index,
                               );
                             },
@@ -342,6 +449,24 @@ class _SellersListScreenState extends State<SellersListScreen> {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
+                      SizedBox(height: 8.h),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.star,
+                            size: 14.sp,
+                            color: AppColors.warning,
+                          ),
+                          SizedBox(width: 4.w),
+                          Text(
+                            '${seller.rating.toStringAsFixed(1)} (${seller.totalReviews} ${AppTexts.reviews})',
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
                       SizedBox(height: 8.h),
                       Row(
                         children: [

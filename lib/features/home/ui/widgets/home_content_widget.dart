@@ -2,6 +2,7 @@ import 'package:cnc_world/core/constant/app_assets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/constant/app_colors.dart';
 import '../../../../core/constant/app_texts.dart';
@@ -24,6 +25,8 @@ class HomeContentWidget extends StatefulWidget {
 
 class _HomeContentWidgetState extends State<HomeContentWidget>
     with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
+  static const String _emergencyWhatsappRoute = '/emergency-whatsapp';
+  static const String _emergencyPhone = '01131242285';
   final StorageService _storageService = di.sl<StorageService>();
   late AnimationController _categoriesAnimationController;
   late Animation<double> _categoriesAnimation;
@@ -285,7 +288,7 @@ class _HomeContentWidgetState extends State<HomeContentWidget>
         _cachedLocale != currentLocale ||
         _cachedRole != role) {
       final localizations = AppLocalizations.of(context);
-      // القايمة الكاملة
+
       List<CategoryItem> allCategories = [
         CategoryItem(
           title:
@@ -335,6 +338,20 @@ class _HomeContentWidgetState extends State<HomeContentWidget>
           color: AppColors.border,
           route: AppRoutes.sellers,
         ),
+        CategoryItem(
+          title:
+              localizations?.homeCategoryEngineers ??
+              AppTexts.homeCategoryEngineers,
+          icon: AppAssets.cncEngineers,
+          color: AppColors.border,
+          route: AppRoutes.engineers,
+        ),
+        CategoryItem(
+          title: AppTexts.homeCategoryEmergency,
+          icon: AppAssets.cncEmergency,
+          color: AppColors.border,
+          route: _emergencyWhatsappRoute,
+        ),
       ];
 
       if (role == 'user') {
@@ -342,7 +359,8 @@ class _HomeContentWidgetState extends State<HomeContentWidget>
           return item.route != AppRoutes.maintenance &&
               item.route != AppRoutes.designs;
         }).toList();
-      } else if (role == 'engineer') {
+      } 
+      else if (role == 'engineer') {
         allCategories = allCategories.where((item) {
           return item.route != AppRoutes.usedMachines &&
               item.route != AppRoutes.sellers;
@@ -433,7 +451,12 @@ class _HomeContentWidgetState extends State<HomeContentWidget>
               child: RepaintBoundary(
                 child: CategoryCardWidget(
                   category: category,
-                  onTap: () {
+                  onTap: () async {
+                    if (category.route == _emergencyWhatsappRoute) {
+                      await _openEmergencyWhatsapp();
+                      return;
+                    }
+                    if (!mounted) return;
                     Navigator.of(context).pushNamed(category.route);
                   },
                 ),
@@ -443,6 +466,13 @@ class _HomeContentWidgetState extends State<HomeContentWidget>
         ),
       ),
     );
+  }
+
+  Future<void> _openEmergencyWhatsapp() async {
+    final uri = Uri.parse('https://wa.me/2$_emergencyPhone');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 }
 

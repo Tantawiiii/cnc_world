@@ -33,6 +33,54 @@ class CompanyImage {
   }
 }
 
+class CompanyCommentUser {
+  final int id;
+  final String name;
+
+  CompanyCommentUser({
+    required this.id,
+    required this.name,
+  });
+
+  factory CompanyCommentUser.fromJson(Map<String, dynamic> json) {
+    return CompanyCommentUser(
+      id: json['id'] ?? 0,
+      name: json['name'] ?? '',
+    );
+  }
+}
+
+class CompanyComment {
+  final int id;
+  final CompanyCommentUser user;
+  final String comment;
+  final double rate;
+  final String createdAt;
+
+  CompanyComment({
+    required this.id,
+    required this.user,
+    required this.comment,
+    required this.rate,
+    required this.createdAt,
+  });
+
+  factory CompanyComment.fromJson(Map<String, dynamic> json) {
+    final rateRaw = json['rate'];
+    return CompanyComment(
+      id: json['id'] ?? 0,
+      user: CompanyCommentUser.fromJson(
+        (json['user'] as Map<String, dynamic>?) ?? <String, dynamic>{},
+      ),
+      comment: json['comment'] ?? '',
+      rate: rateRaw is num
+          ? rateRaw.toDouble()
+          : double.tryParse(rateRaw?.toString() ?? '0') ?? 0,
+      createdAt: json['createdAt'] ?? '',
+    );
+  }
+}
+
 class CompanyProduct {
   final int id;
   final String name;
@@ -83,6 +131,9 @@ class Company {
   final String companyAddress;
   final bool active;
   final List<CompanyProduct> products;
+  final double rating;
+  final int totalReviews;
+  final List<CompanyComment> comments;
   final String createdAt;
   final String updatedAt;
   final String? imageUrl;
@@ -97,6 +148,9 @@ class Company {
     required this.companyAddress,
     required this.active,
     required this.products,
+    required this.rating,
+    required this.totalReviews,
+    required this.comments,
     required this.createdAt,
     required this.updatedAt,
     this.imageUrl,
@@ -104,6 +158,7 @@ class Company {
   });
 
   factory Company.fromJson(Map<String, dynamic> json) {
+    final ratingRaw = json['rating'];
     final productsList = json['products'] as List<dynamic>? ?? [];
     return Company(
       id: json['id'] ?? 0,
@@ -115,6 +170,13 @@ class Company {
       active: json['active'] ?? false,
       products: productsList
           .map((item) => CompanyProduct.fromJson(item as Map<String, dynamic>))
+          .toList(),
+      rating: ratingRaw is num
+          ? ratingRaw.toDouble()
+          : double.tryParse(ratingRaw?.toString() ?? '0') ?? 0,
+      totalReviews: json['total_reviews'] ?? 0,
+      comments: (json['comments'] as List<dynamic>? ?? [])
+          .map((item) => CompanyComment.fromJson(item))
           .toList(),
       createdAt: json['createdAt'] ?? '',
       updatedAt: json['updatedAt'] ?? '',

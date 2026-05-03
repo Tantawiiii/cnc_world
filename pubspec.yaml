@@ -4,7 +4,7 @@ description: "CNC World - Connect with CNC industry companies, designs, merchant
 publish_to: 'none'
 
 
-version: 1.0.12+12
+version: 1.0.13+13
 
 environment:
   sdk: ^3.8.1
@@ -54,6 +54,12 @@ dependencies:
   firebase_core: ^3.15.2
   cloud_firestore: ^5.6.12
   firebase_remote_config: ^5.5.0
+  intl: ^0.20.2
+  firebase_auth: ^5.7.0
+
+  google_maps_flutter: ^2.10.0
+  geolocator: ^13.0.2
+  geocoding: ^3.0.0
 
 
 dev_dependencies:

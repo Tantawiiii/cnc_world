@@ -32,7 +32,8 @@ android {
 
     defaultConfig {
         applicationId = "com.tantawii.cnc_world"
-        minSdk = flutter.minSdkVersion
+        // firebase_auth requires minSdk 23+
+        minSdk = 23
         targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName

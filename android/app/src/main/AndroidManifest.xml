@@ -4,6 +4,8 @@
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
 
 
 
@@ -11,6 +13,8 @@
         android:label="CNC World"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon"
+        android:enableOnBackInvokedCallback="true"
+    
         android:usesCleartextTraffic="false"
         android:networkSecurityConfig="@xml/network_security_config">
         <activity
@@ -48,6 +52,9 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyC8hu8eGcxAJJmeCyInBhMXZ3Viu9Gc55s" />
     </application>
     <queries>
         <intent>

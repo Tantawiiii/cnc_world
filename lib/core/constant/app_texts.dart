@@ -56,6 +56,8 @@ final class AppTexts {
   static const String dontHaveAccount = 'ليس لديك حساب؟';
   static const String register = 'سجل الآن';
   static const String phoneRequired = 'يرجى إدخال رقم الهاتف';
+  static const String invalidPhone =
+      'أدخل رقم جوال مصري صحيح (11 رقمًا يبدأ بـ 01)';
   static const String passwordRequired = 'يرجى إدخال كلمة المرور';
   static const String loginError = 'فشل تسجيل الدخول';
 
@@ -78,6 +80,14 @@ final class AppTexts {
   static const String nameRequired = 'يرجى إدخال الاسم';
   static const String address = 'العنوان';
   static const String addressRequired = 'يرجى إدخال العنوان';
+  static const String pickWorkshopLocation = 'موقع الورشة على الخريطة';
+  static const String pickWorkshopLocationRequired =
+      'يرجى تحديد موقع الورشة على الخريطة';
+  static const String openMap = 'فتح الخريطة';
+  static const String locationPickedShort = 'تم تحديد الموقع';
+  static const String confirmLocation = 'تأكيد الموقع';
+  static const String nearestWorkshopToYou = 'أقرب ورشة إليك';
+  static const String kmApprox = 'كم (تقريبي)';
   static const String country = 'الدولة';
   static const String countryRequired = 'يرجى اختيار الدولة';
   static const String city = 'المدينة';
@@ -108,6 +118,8 @@ final class AppTexts {
   static const String homeCategoryCompanyDirectory = 'دليل الشركات';
   static const String homeCategoryDesigns = 'التصميمات';
   static const String homeCategoryWorkshopDirectory = 'دليل الورش';
+  static const String homeCategoryEngineers = 'دليل المهندسين';
+  static const String homeCategoryEmergency = 'للاعطال الطارئه والسريع';
   static const String errorLoadingSliders = 'خطأ في تحميل الشرائح';
 
   // Settings
@@ -171,13 +183,24 @@ final class AppTexts {
   static const String companies = 'الشركات';
   static const String noCompaniesAvailable = 'لا توجد شركات متاحة';
   static const String companyInfo = 'معلومات الشركة';
-  static const String companyName = 'اسم الشركة';
+  static const String contactCompanyName = 'اسم الشركة';
   static const String companyDescription = 'وصف الشركة';
   static const String companyAddress = 'عنوان الشركة';
   static const String products = 'المنتجات';
 
   // Sellers
   static const String noSellersAvailable = 'لا يوجد بائعين متاحين';
+  static const String engineerInfo = 'معلومات المهندس';
+  static const String reviews = 'مراجعات';
+  static const String comments = 'التعليقات';
+  static const String noCommentsAvailable = 'لا توجد تعليقات متاحة';
+  static const String addCommentTitle = 'أضف تعليقك';
+  static const String writeCommentHint = 'اكتب تعليقك هنا...';
+  static const String submitComment = 'إرسال التقييم';
+  static const String commentRequired = 'يرجى كتابة تعليق';
+  static const String ratingRequired = 'يرجى اختيار تقييم';
+  static const String commentAddedSuccess = 'تم إضافة التقييم بنجاح';
+  static const String commentAddError = 'حدث خطأ أثناء إضافة التقييم';
 
   // Profile
   static const String profile = 'الملف الشخصي';
@@ -204,6 +227,94 @@ final class AppTexts {
   // Contact Us
   static const String contactUs = 'اتصل بنا';
   static const String complaint = 'شكوى';
+  static const String conversations = 'المحادثات';
+  static const String noConversationsYet = 'لا توجد محادثات بعد';
+  static const String startConversationHint =
+      'ابدأ محادثة مع أي مستخدم أو مهندس من أي شاشة في التطبيق';
+  static const String startConversationPlaceholder = 'بدء محادثة...';
+  static const String deleteChatTitle = 'حذف المحادثة؟';
+  static const String deleteChatMessage =
+      'ستُحذف من قائمتك فقط ولن تُحذف عند الطرف الآخر.';
+  static const String deleteChatConfirm = 'حذف';
+  static const String deleteChatError = 'تعذّر حذف المحادثة';
+  static const String termsConditions = 'الشروط والأحكام';
+  static const String termsConditionsSubtitle = 'قراءة شروط استخدام الخدمة';
+  static const String refundPolicy = 'سياسة الاسترداد';
+  static const String refundPolicySubtitle = 'عرض قواعد الاسترداد والاشتراك';
+  static const String securityPolicy = 'الأمان';
+  static const String securityPolicySubtitle = 'كيفية حماية بياناتك';
+  static const String contactInfoSubtitle = 'رقم الشركة وبريد الدعم';
+  static const String policyDetails = 'تفاصيل السياسة';
+  static const String yourDataProtection = 'حماية بياناتك';
+  static const String companyName = 'اسم الشركة';
+  static const String generalEmail = 'البريد الإلكتروني (عام)';
+  static const String supportEmail = 'البريد الإلكتروني (الدعم)';
+  static const String supportAvailabilityMessage =
+      'فريق الدعم متاح لمساعدتك عبر قنوات التواصل الرسمية.';
+
+  // Terms and Conditions Content
+  static const String termsSection1Title = '1. وصف الخدمة';
+  static const String termsSection1Body =
+      'توفر المنصة خدمات الدعم الفني لماكينات CNC، بما في ذلك الاستشارات والإرشاد عن بعد، بالإضافة إلى التنسيق للصيانة الميدانية عند الحاجة.';
+  static const String termsSection2Title = '2. الاشتراك';
+  static const String termsSection2Bullet1 =
+      'يتم تقديم الخدمات بنظام اشتراك شهري.';
+  static const String termsSection2Bullet2 =
+      'يتم تفعيل الاشتراك بعد نجاح عملية الدفع.';
+  static const String termsSection2Bullet3 =
+      'يتجدد الاشتراك تلقائيا ما لم يقم المستخدم بإلغائه.';
+  static const String termsSection3Title = '3. حدود الخدمة';
+  static const String termsSection3Bullet1 =
+      'يقتصر الدعم عن بعد على الاستشارات وإرشادات استكشاف الأعطال فقط.';
+  static const String termsSection3Bullet2 =
+      'لا تضمن الشركة إمكانية حل جميع المشكلات عن بعد.';
+  static const String termsSection3Bullet3 =
+      'الصيانة الميدانية غير مشمولة في الاشتراك وقد تتطلب رسوما إضافية.';
+  static const String termsSection4Title = '4. مسؤوليات المستخدم';
+  static const String termsSection4Bullet1 =
+      'تقديم بيانات صحيحة عن الماكينة ووصف دقيق للمشكلة.';
+  static const String termsSection4Bullet2 =
+      'اتباع إرشادات السلامة عند تطبيق التعليمات الفنية.';
+  static const String termsSection4Bullet3 =
+      'عدم إساءة استخدام المنصة أو الخدمات.';
+  static const String termsSection5Title = '5. إخلاء المسؤولية';
+  static const String termsSection5Body =
+      'لا تتحمل الشركة المسؤولية عن أي أضرار ناتجة عن:';
+  static const String termsSection5Bullet1 = 'الاستخدام غير الصحيح للتعليمات.';
+  static const String termsSection5Bullet2 =
+      'التعديلات غير المصرح بها أو تدخل طرف ثالث.';
+  static const String termsSection6Title = '6. التعديلات';
+  static const String termsSection6Body =
+      'نحتفظ بالحق في تحديث هذه الشروط في أي وقت. استمرارك في استخدام التطبيق يعني موافقتك على النسخة المحدثة.';
+  static const String termsSection7Title = '7. القبول';
+  static const String termsSection7Body =
+      'باستخدام التطبيق، فإنك توافق على جميع الشروط والأحكام المذكورة أعلاه.';
+
+  // Refund Policy Content
+  static const String refundBullet1 =
+      'جميع مدفوعات الاشتراك غير قابلة للاسترداد بعد بدء فترة الخدمة.';
+  static const String refundBullet2 =
+      'يمكن للمستخدم إلغاء الاشتراك في أي وقت قبل دورة الفوترة التالية.';
+  static const String refundBullet3 =
+      'بعد الإلغاء، تظل الخدمة فعالة حتى نهاية الفترة المدفوعة.';
+  static const String refundBullet4 =
+      'لا يتم تقديم استرداد جزئي للوقت غير المستخدم خلال فترة اشتراك نشطة.';
+  static const String refundBullet5 =
+      'في حالة الدفع المكرر أو خطأ الفوترة، يمكن طلب مراجعة خلال 7 أيام.';
+  static const String refundContactMessage =
+      'لطلبات الاسترداد، يرجى التواصل معنا عبر قنوات الدعم الرسمية.';
+
+  // Security Content
+  static const String securityBullet1 =
+      'يتم تشفير جميع عمليات نقل البيانات باستخدام بروتوكولات آمنة.';
+  static const String securityBullet2 =
+      'يتم حفظ بيانات المستخدم بشكل آمن ولا تتم مشاركتها مع أطراف ثالثة دون موافقة.';
+  static const String securityBullet3 =
+      'تتم معالجة المدفوعات عبر بوابات دفع موثوقة وآمنة.';
+  static const String securityBullet4 =
+      'المستخدم مسؤول عن الحفاظ على سرية بيانات حسابه.';
+  static const String securitySuspiciousActivityMessage =
+      'إذا لاحظت أي نشاط مريب، يرجى التواصل معنا فورا.';
   static const String email = 'البريد الإلكتروني';
   static const String emailRequired = 'يرجى إدخال البريد الإلكتروني';
   static const String invalidEmail = 'يرجى إدخال بريد إلكتروني صحيح';
@@ -244,4 +355,8 @@ final class AppTexts {
   static const String confirm = 'تأكيد';
   static const String yes = 'نعم';
   static const String no = 'لا';
+  static const String sessionExpiredTitle = 'انتهت الجلسة';
+  static const String sessionExpiredMessage =
+      'انتهت صلاحية تسجيل الدخول الخاص بك. يرجى تسجيل الدخول مرة أخرى للمتابعة بشكل آمن.';
+  static const String goToLogin = 'الذهاب لتسجيل الدخول';
 }

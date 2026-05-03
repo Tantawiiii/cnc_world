@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
-import 'dart:math' as math;
 
 import '../../../core/constant/app_colors.dart';
 import '../../../core/constant/app_texts.dart';
@@ -11,7 +10,6 @@ import '../../../core/routing/app_routes.dart';
 import '../cubit/company_cubit.dart';
 import '../cubit/company_state.dart';
 import '../data/models/company_models.dart';
-import '../data/repositories/company_repository.dart';
 
 class CompaniesListScreen extends StatefulWidget {
   const CompaniesListScreen({super.key});
@@ -22,7 +20,9 @@ class CompaniesListScreen extends StatefulWidget {
 
 class _CompaniesListScreenState extends State<CompaniesListScreen> {
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
   bool _isLoadingMore = false;
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -34,6 +34,7 @@ class _CompaniesListScreenState extends State<CompaniesListScreen> {
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -113,6 +114,32 @@ class _CompaniesListScreenState extends State<CompaniesListScreen> {
                     ],
                   ),
                 ),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value.trim().toLowerCase();
+                      });
+                    },
+                    decoration: InputDecoration(
+                      hintText: '${AppTexts.companies}...',
+                      prefixIcon: const Icon(Icons.search),
+                      filled: true,
+                      fillColor: AppColors.surface,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                        borderSide: BorderSide(color: AppColors.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                        borderSide: BorderSide(color: AppColors.border),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 10.h),
 
                 Expanded(
                   child: BlocBuilder<CompanyCubit, CompanyState>(
@@ -130,7 +157,20 @@ class _CompaniesListScreenState extends State<CompaniesListScreen> {
                         hasMore = state.hasMore;
                       }
 
-                      if (companies.isEmpty &&
+                      final filteredCompanies = companies.where((company) {
+                        if (_searchQuery.isEmpty) return true;
+                        return company.companyName.toLowerCase().contains(
+                                  _searchQuery,
+                                ) ||
+                                company.phone.toLowerCase().contains(
+                                  _searchQuery,
+                                ) ||
+                                company.companyAddress.toLowerCase().contains(
+                                  _searchQuery,
+                                );
+                      }).toList();
+
+                      if (filteredCompanies.isEmpty &&
                           state is! CompaniesLoading &&
                           state is! CompaniesLoadingMore) {
                         return Center(
@@ -187,15 +227,15 @@ class _CompaniesListScreenState extends State<CompaniesListScreen> {
                               horizontal: 16.w,
                               vertical: 8.h,
                             ),
-                            itemCount: companies.length + (hasMore ? 1 : 0),
+                            itemCount: filteredCompanies.length + (hasMore ? 1 : 0),
                             separatorBuilder: (context, index) {
-                              if (index >= companies.length) {
+                              if (index >= filteredCompanies.length) {
                                 return const SizedBox.shrink();
                               }
                               return SizedBox(height: 12.h);
                             },
                             itemBuilder: (context, index) {
-                              if (index >= companies.length) {
+                              if (index >= filteredCompanies.length) {
                                 // Loading more indicator
                                 return Padding(
                                   padding: EdgeInsets.symmetric(vertical: 16.h),
@@ -208,7 +248,7 @@ class _CompaniesListScreenState extends State<CompaniesListScreen> {
                               }
                               return _buildAnimatedCompanyCard(
                                 context,
-                                companies[index],
+                                filteredCompanies[index],
                                 index,
                               );
                             },
@@ -341,6 +381,24 @@ class _CompaniesListScreenState extends State<CompaniesListScreen> {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
+                      SizedBox(height: 8.h),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.star,
+                            size: 14.sp,
+                            color: AppColors.warning,
+                          ),
+                          SizedBox(width: 4.w),
+                          Text(
+                            '${company.rating.toStringAsFixed(1)} (${company.totalReviews} ${AppTexts.reviews})',
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
                       SizedBox(height: 8.h),
                       Row(
                         children: [

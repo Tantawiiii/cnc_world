@@ -8,6 +8,7 @@ import 'package:video_player/video_player.dart';
 import '../../../core/constant/app_colors.dart';
 import '../../../core/constant/app_texts.dart';
 import '../../../core/localization/app_localizations.dart';
+import '../../chat/ui/chat_button.dart';
 import '../cubit/used_machine_cubit.dart';
 import '../cubit/used_machine_state.dart';
 import '../data/models/used_machine_models.dart';
@@ -458,6 +459,21 @@ class UsedMachineDetailScreen extends StatelessWidget {
                                             ],
                                           ),
                                         ),
+                                        SizedBox(width: 8.w),
+                                        StandaloneChatButton(
+                                            targetUserId:
+                                                machine.user!.id.toString(),
+                                            targetUserName: machine.user!.name,
+                                            targetUserImage: () {
+                                              final u = machine.user!;
+                                              final url = u.imageUrl ??
+                                                  u.image?.fullUrl;
+                                              if (url == null || url.isEmpty) {
+                                                return null;
+                                              }
+                                              return url;
+                                            }(),
+                                          ),
                                       ],
                                     ),
                                   ],

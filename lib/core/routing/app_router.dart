@@ -31,9 +31,17 @@ import '../../features/sellers/ui/sellers_list_screen.dart';
 import '../../features/sellers/ui/seller_detail_screen.dart';
 import '../../features/sellers/cubit/seller_cubit.dart';
 import '../../features/sellers/data/repositories/seller_repository.dart';
+import '../../features/engineers/ui/engineers_list_screen.dart';
+import '../../features/engineers/ui/engineer_detail_screen.dart';
+import '../../features/engineers/cubit/engineer_cubit.dart';
+import '../../features/engineers/data/repositories/engineer_repository.dart';
 import '../../features/profile/ui/profile_screen.dart';
 import '../../features/onboarding/onboarding_screen.dart';
 import '../../features/settings/settings_screen.dart';
+import '../../features/settings/ui/contact_info_screen.dart';
+import '../../features/settings/ui/refund_policy_screen.dart';
+import '../../features/settings/ui/security_screen.dart';
+import '../../features/settings/ui/terms_conditions_screen.dart';
 import '../../features/splash/splash_screen.dart';
 import 'app_routes.dart';
 
@@ -175,8 +183,38 @@ Route<dynamic> onGenerateAppRoute(RouteSettings settings) {
         builder: (_) =>
             Scaffold(body: Center(child: Text(AppTexts.routeNotFound))),
       );
+    case AppRoutes.engineers:
+      return MaterialPageRoute(
+        builder: (_) => BlocProvider(
+          create: (context) {
+            final cubit = EngineerCubit(EngineerRepository());
+            cubit.loadEngineers();
+            return cubit;
+          },
+          child: const EngineersListScreen(),
+        ),
+      );
+    case AppRoutes.engineerDetail:
+      final engineerId = settings.arguments as int?;
+      if (engineerId != null) {
+        return MaterialPageRoute(
+          builder: (_) => EngineerDetailScreen(engineerId: engineerId),
+        );
+      }
+      return MaterialPageRoute(
+        builder: (_) =>
+            Scaffold(body: Center(child: Text(AppTexts.routeNotFound))),
+      );
     case AppRoutes.profile:
       return MaterialPageRoute(builder: (_) => const ProfileScreen());
+    case AppRoutes.termsConditions:
+      return MaterialPageRoute(builder: (_) => const TermsConditionsScreen());
+    case AppRoutes.refundPolicy:
+      return MaterialPageRoute(builder: (_) => const RefundPolicyScreen());
+    case AppRoutes.security:
+      return MaterialPageRoute(builder: (_) => const SecurityScreen());
+    case AppRoutes.contactInfo:
+      return MaterialPageRoute(builder: (_) => const ContactInfoScreen());
     default:
       return MaterialPageRoute(
         builder: (_) =>

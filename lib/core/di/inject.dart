@@ -6,6 +6,7 @@ import '../network/api_service.dart';
 import '../services/storage_service.dart';
 import '../services/connectivity_service.dart';
 import '../services/remote_config_service.dart';
+import '../services/firebase_auth_service.dart';
 import '../../features/connectivity/logic/connectivity_cubit.dart';
 
 
@@ -18,6 +19,7 @@ Future<void> init() async {
 
   // Storage Service
   sl.registerLazySingleton(() => StorageService(sl<SharedPreferences>()));
+  sl.registerLazySingleton(() => FirebaseAuthService());
 
   // Dio Client
   sl.registerLazySingleton(
