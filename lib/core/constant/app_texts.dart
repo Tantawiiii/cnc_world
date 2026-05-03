@@ -56,6 +56,8 @@ final class AppTexts {
   static const String dontHaveAccount = 'ليس لديك حساب؟';
   static const String register = 'سجل الآن';
   static const String phoneRequired = 'يرجى إدخال رقم الهاتف';
+  static const String invalidPhone =
+      'أدخل رقم جوال مصري صحيح (11 رقمًا يبدأ بـ 01)';
   static const String passwordRequired = 'يرجى إدخال كلمة المرور';
   static const String loginError = 'فشل تسجيل الدخول';
 

@@ -247,6 +247,15 @@ class _RegisterScreenState extends State<RegisterScreen>
     return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(v);
   }
 
+  /// Egyptian mobile: 11 digits, `01` + carrier digit (0,1,2,5) + 8 digits.
+  static final RegExp _egyptianMobileRegex = RegExp(r'^01[0125]\d{8}$');
+
+  bool _isValidPhoneNumber(String value) {
+    final digits = value.trim();
+    if (digits.isEmpty) return false;
+    return _egyptianMobileRegex.hasMatch(digits);
+  }
+
   Future<void> _pickImage(BuildContext context) async {
     if (_isPickingImage || _isUploadingImage) {
       return;
@@ -777,9 +786,14 @@ class _RegisterScreenState extends State<RegisterScreen>
                                         FilteringTextInputFormatter.digitsOnly,
                                       ],
                                       validator: (value) {
-                                        if (value == null || value.isEmpty) {
+                                        final v = value?.trim() ?? '';
+                                        if (v.isEmpty) {
                                           return localizations?.phoneRequired ??
                                               AppTexts.phoneRequired;
+                                        }
+                                        if (!_isValidPhoneNumber(v)) {
+                                          return localizations?.invalidPhone ??
+                                              AppTexts.invalidPhone;
                                         }
                                         return null;
                                       },
@@ -1183,6 +1197,15 @@ class _RegisterScreenState extends State<RegisterScreen>
                                           FilteringTextInputFormatter
                                               .digitsOnly,
                                         ],
+                                        validator: (value) {
+                                          final v = value?.trim() ?? '';
+                                          if (v.isEmpty) return null;
+                                          if (!_isValidPhoneNumber(v)) {
+                                            return localizations?.invalidPhone ??
+                                                AppTexts.invalidPhone;
+                                          }
+                                          return null;
+                                        },
                                       ),
                                     ],
                                   );

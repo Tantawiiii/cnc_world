@@ -17,6 +17,8 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
+enum _SplashDestination { appBlocked, onboarding, home }
+
 class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
   late AnimationController _mainController;
@@ -33,28 +35,40 @@ class _SplashScreenState extends State<SplashScreen>
 
   final StorageService _storageService = di.sl<StorageService>();
 
+  /// Started immediately so auth / location / nearest-seller work overlaps the intro animation.
+  late final Future<_SplashDestination> _destinationFuture;
+
+  /// Avoids waiting for the full logo animation; keeps a short branded moment without a flash.
+  static const Duration _minSplashDisplay = Duration(milliseconds: 320);
+
+  late final Stopwatch _splashStopwatch;
+  bool _didNavigate = false;
+
   @override
   void initState() {
     super.initState();
 
+    _splashStopwatch = Stopwatch()..start();
+    _destinationFuture = _resolveDestination();
+
     _mainController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2000),
+      duration: const Duration(milliseconds: 520),
     );
 
     _backgroundController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 3000),
+      duration: const Duration(milliseconds: 2400),
     )..repeat(reverse: true);
 
     _glowController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2000),
+      duration: const Duration(milliseconds: 1600),
     )..repeat(reverse: true);
 
     _particleController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 4000),
+      duration: const Duration(milliseconds: 3200),
     )..repeat();
 
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -90,45 +104,45 @@ class _SplashScreenState extends State<SplashScreen>
       CurvedAnimation(parent: _particleController, curve: Curves.linear),
     );
 
-    _mainController.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        Future.delayed(const Duration(milliseconds: 500), () {
-          if (mounted) {
-            _checkAppStatusAndNavigate();
-          }
-        });
-      }
-    });
-
     _mainController.forward();
+    _navigateWhenReady();
   }
 
-  Future<void> _checkAppStatusAndNavigate() async {
+  Future<_SplashDestination> _resolveDestination() async {
     final remoteConfig = di.sl<RemoteConfigService>();
-    final isAllowed = remoteConfig.isAppWorking();
-
-    if (!mounted) return;
-
-    if (!isAllowed) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const AppBlockedScreen()),
-      );
-      return;
+    if (!remoteConfig.isAppWorking()) {
+      return _SplashDestination.appBlocked;
     }
 
     final token = _storageService.getToken();
-    if (token != null && token.isNotEmpty) {
-      final sessionOk =
-          await PostSplashSessionService()
-              .validateTokenSyncLocationAndNearestSeller();
-      if (!mounted) return;
-      if (sessionOk) {
+    if (token == null || token.isEmpty) {
+      return _SplashDestination.onboarding;
+    }
+
+    final sessionOk =
+        await PostSplashSessionService()
+            .validateTokenSyncLocationAndNearestSeller();
+    return sessionOk ? _SplashDestination.home : _SplashDestination.onboarding;
+  }
+
+  Future<void> _navigateWhenReady() async {
+    final destination = await _destinationFuture;
+    final elapsed = _splashStopwatch.elapsed;
+    if (elapsed < _minSplashDisplay) {
+      await Future<void>.delayed(_minSplashDisplay - elapsed);
+    }
+    if (!mounted || _didNavigate) return;
+    _didNavigate = true;
+
+    switch (destination) {
+      case _SplashDestination.appBlocked:
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const AppBlockedScreen()),
+        );
+      case _SplashDestination.home:
         Navigator.of(context).pushReplacementNamed(AppRoutes.home);
-      } else {
+      case _SplashDestination.onboarding:
         Navigator.of(context).pushReplacementNamed(AppRoutes.onboarding);
-      }
-    } else {
-      Navigator.of(context).pushReplacementNamed(AppRoutes.onboarding);
     }
   }
 

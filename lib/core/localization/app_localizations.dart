@@ -56,6 +56,8 @@ class AppLocalizations {
       'dontHaveAccount': 'ليس لديك حساب؟',
       'register': 'سجل الآن',
       'phoneRequired': 'يرجى إدخال رقم الهاتف',
+      'invalidPhone':
+          'أدخل رقم جوال مصري صحيح (11 رقمًا يبدأ بـ 01، مثل 01012345678)',
       'passwordRequired': 'يرجى إدخال كلمة المرور',
 
       // Register
@@ -212,6 +214,8 @@ class AppLocalizations {
       'dontHaveAccount': "Don't have an account?",
       'register': 'Sign Up',
       'phoneRequired': 'Please enter phone number',
+      'invalidPhone':
+          'Enter a valid Egyptian mobile (11 digits starting with 01, e.g. 01012345678)',
       'passwordRequired': 'Please enter password',
 
       // Register
@@ -365,6 +369,7 @@ class AppLocalizations {
   String get dontHaveAccount => translate('dontHaveAccount');
   String get register => translate('register');
   String get phoneRequired => translate('phoneRequired');
+  String get invalidPhone => translate('invalidPhone');
   String get passwordRequired => translate('passwordRequired');
 
   // Register

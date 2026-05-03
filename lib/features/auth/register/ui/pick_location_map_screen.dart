@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../../../core/constant/app_colors.dart';
@@ -19,7 +20,6 @@ class PickedMapLocation {
   });
 }
 
-/// Map centered on Greater Cairo by default; tap to place marker, confirm to return [PickedMapLocation].
 class PickLocationMapScreen extends StatefulWidget {
   final LatLng? initialTarget;
 
@@ -33,12 +33,44 @@ class _PickLocationMapScreenState extends State<PickLocationMapScreen> {
   static const LatLng _defaultCairo = LatLng(30.0444, 31.2357);
 
   late LatLng _markerPosition;
+  GoogleMapController? _mapController;
   bool _loadingAddress = false;
 
   @override
   void initState() {
     super.initState();
     _markerPosition = widget.initialTarget ?? _defaultCairo;
+    if (widget.initialTarget == null) {
+      _setCurrentLocationAsDefault();
+    }
+  }
+
+  Future<void> _setCurrentLocationAsDefault() async {
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return;
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      if (!mounted) return;
+
+      final current = LatLng(position.latitude, position.longitude);
+      setState(() => _markerPosition = current);
+      await _mapController?.animateCamera(CameraUpdate.newLatLng(current));
+    } catch (_) {
+      // Keep Cairo fallback if current location cannot be fetched.
+    }
   }
 
   Future<String?> _reverseGeocode(LatLng p) async {
@@ -88,6 +120,9 @@ class _PickLocationMapScreenState extends State<PickLocationMapScreen> {
       body: Stack(
         children: [
           GoogleMap(
+            onMapCreated: (controller) {
+              _mapController = controller;
+            },
             initialCameraPosition: CameraPosition(
               target: _markerPosition,
               zoom: 14,
@@ -146,5 +181,4 @@ class _PickLocationMapScreenState extends State<PickLocationMapScreen> {
       ),
     );
   }
-
 }
